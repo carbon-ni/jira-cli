@@ -1,8 +1,12 @@
 package api
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 	"github.com/zalando/go-keyring"
 
@@ -11,7 +15,11 @@ import (
 	"github.com/ankitpokhrel/jira-cli/pkg/netrc"
 )
 
-const clientTimeout = 15 * time.Second
+const (
+	clientTimeout   = 15 * time.Second
+	cookieConfigDir = ".jira"
+	cookieFileName  = "cookies.txt"
+)
 
 var jiraClient *jira.Client
 
@@ -39,6 +47,12 @@ func Client(config jira.Config) *jira.Client {
 	if config.APIToken == "" {
 		secret, _ := keyring.Get("jira-cli", config.Login)
 		config.APIToken = secret
+	}
+	if config.Cookies == "" {
+		config.Cookies = viper.GetString("cookies")
+	}
+	if config.Cookies == "" {
+		config.Cookies = readCookieFile()
 	}
 	if config.AuthType == nil {
 		authType := jira.AuthType(viper.GetString("auth_type"))
@@ -68,6 +82,32 @@ func Client(config jira.Config) *jira.Client {
 	)
 
 	return jiraClient
+}
+
+func readCookieFile() string {
+	configDir, err := configHome()
+	if err != nil {
+		return ""
+	}
+
+	cookies, err := os.ReadFile(filepath.Join(configDir, cookieConfigDir, cookieFileName))
+	if err != nil {
+		return ""
+	}
+
+	return strings.TrimSpace(string(cookies))
+}
+
+func configHome() (string, error) {
+	if home := os.Getenv("XDG_CONFIG_HOME"); home != "" {
+		return home, nil
+	}
+
+	home, err := homedir.Dir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, ".config"), nil
 }
 
 // DefaultClient returns default jira client.

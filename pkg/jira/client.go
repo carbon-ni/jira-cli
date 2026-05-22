@@ -33,6 +33,8 @@ const (
 
 	apiVersion2 = "v2"
 	apiVersion3 = "v3"
+
+	browserUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
 )
 
 var (
@@ -108,6 +110,7 @@ type Config struct {
 	Server     string
 	Login      string
 	APIToken   string
+	Cookies    string
 	AuthType   *AuthType
 	Insecure   *bool
 	Debug      bool
@@ -122,6 +125,7 @@ type Client struct {
 	login     string
 	authType  *AuthType
 	token     string
+	cookies   string
 	timeout   time.Duration
 	debug     bool
 }
@@ -135,6 +139,7 @@ func NewClient(c Config, opts ...ClientFunc) *Client {
 		server:   strings.TrimSuffix(c.Server, "/"),
 		login:    c.Login,
 		token:    c.APIToken,
+		cookies:  c.Cookies,
 		authType: c.AuthType,
 		debug:    c.Debug,
 	}
@@ -281,6 +286,8 @@ func (c *Client) request(ctx context.Context, method, endpoint string, body []by
 		}
 	case string(AuthTypeBearer):
 		req.Header.Add("Authorization", "Bearer "+c.token)
+	case string(AuthTypeCookie):
+		c.setCookieAuth(req, method)
 	case string(AuthTypeBasic):
 		req.SetBasicAuth(c.login, c.token)
 	}
@@ -288,6 +295,34 @@ func (c *Client) request(ctx context.Context, method, endpoint string, body []by
 	httpClient := &http.Client{Transport: c.transport}
 
 	return httpClient.Do(req.WithContext(ctx))
+}
+
+func (c *Client) setCookieAuth(req *http.Request, method string) {
+	if c.cookies == "" {
+		return
+	}
+
+	req.Header.Set("Cookie", c.cookies)
+	req.Header.Set("User-Agent", browserUserAgent)
+
+	if method != http.MethodPost && method != http.MethodPut && method != http.MethodDelete {
+		return
+	}
+
+	if xsrfToken := xsrfTokenFromCookie(c.cookies); xsrfToken != "" {
+		req.Header.Set("atl-xsrf-token", xsrfToken)
+	}
+}
+
+func xsrfTokenFromCookie(cookies string) string {
+	for _, cookie := range strings.Split(cookies, ";") {
+		name, value, found := strings.Cut(strings.TrimSpace(cookie), "=")
+		if found && name == "atlassian.xsrf.token" {
+			return value
+		}
+	}
+
+	return ""
 }
 
 func dump(req *http.Request, res *http.Response) {

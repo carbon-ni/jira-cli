@@ -188,6 +188,73 @@ func TestPutV2(t *testing.T) {
 	_ = resp.Body.Close()
 }
 
+func TestCookieAuthAddsCookieHeader(t *testing.T) {
+	cookieAuth := AuthTypeCookie
+	cookies := "cloud.session.token=abc; atlassian.xsrf.token=xsrf-123"
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/rest/api/3/search", r.URL.Path)
+		assert.Equal(t, cookies, r.Header.Get("Cookie"))
+		assert.NotEmpty(t, r.Header.Get("User-Agent"))
+		assert.Empty(t, r.Header.Get("atl-xsrf-token"))
+
+		w.WriteHeader(200)
+	}))
+	defer server.Close()
+
+	client := NewClient(Config{Server: server.URL, AuthType: &cookieAuth, Cookies: cookies}, WithTimeout(3*time.Second))
+	resp, err := client.Get(context.Background(), "/search", nil)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 200, resp.StatusCode)
+
+	_ = resp.Body.Close()
+}
+
+func TestCookieAuthAddsXSRFHeaderForMutatingRequests(t *testing.T) {
+	cookieAuth := AuthTypeCookie
+	cookies := "cloud.session.token=abc; atlassian.xsrf.token=xsrf-123; other=value"
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/rest/api/3/issue", r.URL.Path)
+		assert.Equal(t, cookies, r.Header.Get("Cookie"))
+		assert.Equal(t, "xsrf-123", r.Header.Get("atl-xsrf-token"))
+		assert.NotEmpty(t, r.Header.Get("User-Agent"))
+
+		w.WriteHeader(201)
+	}))
+	defer server.Close()
+
+	client := NewClient(Config{Server: server.URL, AuthType: &cookieAuth, Cookies: cookies}, WithTimeout(3*time.Second))
+	resp, err := client.Post(context.Background(), "/issue", []byte("{}"), nil)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 201, resp.StatusCode)
+
+	_ = resp.Body.Close()
+}
+
+func TestCookieAuthWithoutXSRFCookieDoesNotAddXSRFHeader(t *testing.T) {
+	cookieAuth := AuthTypeCookie
+	cookies := "cloud.session.token=abc"
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, cookies, r.Header.Get("Cookie"))
+		assert.Empty(t, r.Header.Get("atl-xsrf-token"))
+
+		w.WriteHeader(201)
+	}))
+	defer server.Close()
+
+	client := NewClient(Config{Server: server.URL, AuthType: &cookieAuth, Cookies: cookies}, WithTimeout(3*time.Second))
+	resp, err := client.Post(context.Background(), "/issue", []byte("{}"), nil)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 201, resp.StatusCode)
+
+	_ = resp.Body.Close()
+}
+
 func TestDeleteV2(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/rest/api/2/issue/TEST-1", r.URL.Path)

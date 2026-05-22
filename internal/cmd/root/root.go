@@ -3,7 +3,9 @@ package root
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -84,8 +86,12 @@ func NewCmdRoot() *cobra.Command {
 				return
 			}
 
-			// mTLS doesn't need Jira API Token.
-			if viper.GetString("auth_type") != string(jira.AuthTypeMTLS) {
+			switch viper.GetString("auth_type") {
+			case string(jira.AuthTypeMTLS):
+				// mTLS doesn't need Jira API Token.
+			case string(jira.AuthTypeCookie):
+				checkForJiraCookies()
+			default:
 				checkForJiraToken(viper.GetString("server"), viper.GetString("login"))
 			}
 
@@ -154,6 +160,30 @@ func cmdRequireToken(cmd string) bool {
 		"man",
 	}
 	return !slices.Contains(allowList, cmd)
+}
+
+func checkForJiraCookies() {
+	if viper.GetString("cookies") != "" {
+		return
+	}
+
+	configDir, err := cmdutil.GetConfigHome()
+	if err == nil {
+		cookies, err := os.ReadFile(filepath.Join(configDir, jiraConfig.Dir, "cookies.txt"))
+		if err == nil && strings.TrimSpace(string(cookies)) != "" {
+			return
+		}
+	}
+
+	cmdutil.Warn(`The tool needs Jira browser cookies to function with cookie auth.
+
+You can either:
+  - Export cookies to your shell as a JIRA_COOKIES env variable
+  - Or, write the full Cookie header to ~/.config/.jira/cookies.txt
+
+You can extract cookies from browser devtools or a HAR file.
+`)
+	os.Exit(1)
 }
 
 func checkForJiraToken(server string, login string) {
