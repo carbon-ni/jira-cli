@@ -12,7 +12,7 @@
         pkgs = import nixpkgs { inherit system; };
         jira-cli = pkgs.buildGoModule {
           pname = "jira-cli";
-          version = "0.0.0";
+          version = "1.0.0";
           src = ./.;
           vendorHash = "sha256-cl+Sfi9WSPy8qOtB13rRiKtQdDC+HC0+FMKpsWbtU2w=";
           subPackages = [ "cmd/jira" ];

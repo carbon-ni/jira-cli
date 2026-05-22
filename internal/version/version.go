@@ -9,7 +9,7 @@ import (
 
 // Build information is populated at build-time.
 var (
-	Version         = "v0.0.0-dev"
+	Version         = "v1.0.0-dev"
 	GitCommit       = ""
 	SourceDateEpoch = "-1"
 	GoVersion       = runtime.Version()

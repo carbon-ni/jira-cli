@@ -9,7 +9,7 @@ func init() {
 		// info.Main.Version describes the version of the module containing
 		// package main, not the version of “the main module”.
 		// See https://golang.org/issue/33975.
-		if Version == "v0.0.0-dev" && info.Main.Version != "(devel)" {
+		if Version == "v1.0.0-dev" && info.Main.Version != "(devel)" {
 			Version = info.Main.Version
 		}
 	}
