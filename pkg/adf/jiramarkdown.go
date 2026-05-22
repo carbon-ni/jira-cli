@@ -67,18 +67,18 @@ func nodePanelOpenHook(n Connector) string {
 			if k == "panelType" {
 				switch v {
 				case panelTypeInfo:
-					tag.WriteString(fmt.Sprintf("bgColor=%s", bgColorInfo))
+					fmt.Fprintf(&tag, "bgColor=%s", bgColorInfo)
 				case panelTypeNote:
-					tag.WriteString(fmt.Sprintf("bgColor=%s", bgColorNote))
+					fmt.Fprintf(&tag, "bgColor=%s", bgColorNote)
 				case panelTypeError:
-					tag.WriteString(fmt.Sprintf("bgColor=%s", bgColorError))
+					fmt.Fprintf(&tag, "bgColor=%s", bgColorError)
 				case panelTypeSuccess:
-					tag.WriteString(fmt.Sprintf("bgColor=%s", bgColorSuccess))
+					fmt.Fprintf(&tag, "bgColor=%s", bgColorSuccess)
 				case panelTypeWarning:
-					tag.WriteString(fmt.Sprintf("bgColor=%s", bgColorWarning))
+					fmt.Fprintf(&tag, "bgColor=%s", bgColorWarning)
 				}
 			} else {
-				tag.WriteString(fmt.Sprintf("|%s=%s", k, v))
+				fmt.Fprintf(&tag, "|%s=%s", k, v)
 			}
 		}
 	}
