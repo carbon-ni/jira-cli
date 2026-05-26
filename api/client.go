@@ -16,9 +16,10 @@ import (
 )
 
 const (
-	clientTimeout   = 15 * time.Second
-	cookieConfigDir = ".jira"
-	cookieFileName  = "cookies.txt"
+	clientTimeout            = 15 * time.Second
+	cookieConfigDir          = ".jira"
+	atlassianCookieConfigDir = "atlassian"
+	cookieFileName           = "cookies.txt"
 )
 
 var jiraClient *jira.Client
@@ -90,12 +91,17 @@ func readCookieFile() string {
 		return ""
 	}
 
-	cookies, err := os.ReadFile(filepath.Join(configDir, cookieConfigDir, cookieFileName))
-	if err != nil {
-		return ""
+	for _, path := range []string{
+		filepath.Join(configDir, cookieConfigDir, cookieFileName),
+		filepath.Join(configDir, atlassianCookieConfigDir, cookieFileName),
+	} {
+		cookies, err := os.ReadFile(path)
+		if err == nil {
+			return strings.TrimSpace(string(cookies))
+		}
 	}
 
-	return strings.TrimSpace(string(cookies))
+	return ""
 }
 
 func configHome() (string, error) {

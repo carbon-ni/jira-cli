@@ -32,8 +32,9 @@ import (
 )
 
 const (
-	jiraCLIHelpLink  = "https://github.com/ankitpokhrel/jira-cli#getting-started"
-	jiraAPITokenLink = "https://id.atlassian.com/manage-profile/security/api-tokens"
+	jiraCLIHelpLink          = "https://github.com/ankitpokhrel/jira-cli#getting-started"
+	jiraAPITokenLink         = "https://id.atlassian.com/manage-profile/security/api-tokens"
+	atlassianCookieConfigDir = "atlassian"
 )
 
 var (
@@ -169,9 +170,14 @@ func checkForJiraCookies() {
 
 	configDir, err := cmdutil.GetConfigHome()
 	if err == nil {
-		cookies, err := os.ReadFile(filepath.Join(configDir, jiraConfig.Dir, "cookies.txt"))
-		if err == nil && strings.TrimSpace(string(cookies)) != "" {
-			return
+		for _, path := range []string{
+			filepath.Join(configDir, jiraConfig.Dir, "cookies.txt"),
+			filepath.Join(configDir, atlassianCookieConfigDir, "cookies.txt"),
+		} {
+			cookies, err := os.ReadFile(path)
+			if err == nil && strings.TrimSpace(string(cookies)) != "" {
+				return
+			}
 		}
 	}
 
@@ -180,6 +186,7 @@ func checkForJiraCookies() {
 You can either:
   - Export cookies to your shell as a JIRA_COOKIES env variable
   - Or, write the full Cookie header to ~/.config/.jira/cookies.txt
+  - Or, share the Atlassian cookie file at ~/.config/atlassian/cookies.txt
 
 You can extract cookies from browser devtools or a HAR file.
 `)
