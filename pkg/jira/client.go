@@ -52,7 +52,14 @@ type ErrUnexpectedResponse struct {
 }
 
 func (e *ErrUnexpectedResponse) Error() string {
-	return e.Body.String()
+	msg := e.Body.String()
+	if msg != "" {
+		return msg
+	}
+	if e.Status != "" {
+		return fmt.Sprintf("unexpected response: %s", e.Status)
+	}
+	return fmt.Sprintf("unexpected response: status code %d", e.StatusCode)
 }
 
 // ErrMultipleFailed represents a grouped error, usually when

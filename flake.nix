@@ -24,7 +24,10 @@
           jira-cli = jira-cli;
         };
 
-        apps.default = flake-utils.lib.mkApp { drv = jira-cli; };
+        apps.default = flake-utils.lib.mkApp {
+          drv = jira-cli;
+          exePath = "/bin/jira";
+        };
 
         devShells.default = pkgs.mkShell {
           packages = [
