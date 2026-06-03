@@ -275,6 +275,9 @@ func (c *Client) request(ctx context.Context, method, endpoint string, body []by
 	}()
 
 	for k, v := range headers {
+		if strings.EqualFold(k, "X-Requested-By") {
+			continue
+		}
 		req.Header.Set(k, v)
 	}
 

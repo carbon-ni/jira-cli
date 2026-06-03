@@ -82,7 +82,7 @@ func TestPost(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/rest/api/3/issue", r.URL.Path)
 		assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
-		assert.Equal(t, "jira-cli", r.Header.Get("X-Requested-By"))
+		assert.Empty(t, r.Header.Get("X-Requested-By"))
 
 		w.WriteHeader(201)
 	}))
@@ -104,7 +104,7 @@ func TestPostV2(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/rest/api/2/issue", r.URL.Path)
 		assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
-		assert.Equal(t, "jira-cli", r.Header.Get("X-Requested-By"))
+		assert.Empty(t, r.Header.Get("X-Requested-By"))
 
 		w.WriteHeader(201)
 	}))
@@ -112,8 +112,7 @@ func TestPostV2(t *testing.T) {
 
 	client := NewClient(Config{Server: server.URL}, WithTimeout(3*time.Second))
 	resp, err := client.PostV2(context.Background(), "/issue", []byte("hello"), Header{
-		"Content-Type":   "application/json",
-		"X-Requested-By": "jira-cli",
+		"Content-Type": "application/json",
 	})
 
 	assert.NoError(t, err)
@@ -126,7 +125,7 @@ func TestPostV1(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/rest/agile/1.0/issue", r.URL.Path)
 		assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
-		assert.Equal(t, "jira-cli", r.Header.Get("X-Requested-By"))
+		assert.Empty(t, r.Header.Get("X-Requested-By"))
 
 		w.WriteHeader(201)
 	}))
@@ -134,8 +133,7 @@ func TestPostV1(t *testing.T) {
 
 	client := NewClient(Config{Server: server.URL}, WithTimeout(3*time.Second))
 	resp, err := client.PostV1(context.Background(), "/issue", []byte("hello"), Header{
-		"Content-Type":   "application/json",
-		"X-Requested-By": "jira-cli",
+		"Content-Type": "application/json",
 	})
 
 	assert.NoError(t, err)
@@ -148,7 +146,7 @@ func TestPut(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/rest/api/3/issue/TEST-1/assignee", r.URL.Path)
 		assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
-		assert.Equal(t, "jira-cli", r.Header.Get("X-Requested-By"))
+		assert.Empty(t, r.Header.Get("X-Requested-By"))
 
 		w.WriteHeader(204)
 	}))
@@ -156,8 +154,7 @@ func TestPut(t *testing.T) {
 
 	client := NewClient(Config{Server: server.URL}, WithTimeout(3*time.Second))
 	resp, err := client.Put(context.Background(), "/issue/TEST-1/assignee", []byte("jon"), Header{
-		"Content-Type":   "application/json",
-		"X-Requested-By": "jira-cli",
+		"Content-Type": "application/json",
 	})
 
 	assert.NoError(t, err)
@@ -170,7 +167,7 @@ func TestPutV2(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/rest/api/2/issue/TEST-1/assignee", r.URL.Path)
 		assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
-		assert.Equal(t, "jira-cli", r.Header.Get("X-Requested-By"))
+		assert.Empty(t, r.Header.Get("X-Requested-By"))
 
 		w.WriteHeader(204)
 	}))
@@ -178,8 +175,7 @@ func TestPutV2(t *testing.T) {
 
 	client := NewClient(Config{Server: server.URL}, WithTimeout(3*time.Second))
 	resp, err := client.PutV2(context.Background(), "/issue/TEST-1/assignee", []byte("jon"), Header{
-		"Content-Type":   "application/json",
-		"X-Requested-By": "jira-cli",
+		"Content-Type": "application/json",
 	})
 
 	assert.NoError(t, err)
@@ -258,16 +254,14 @@ func TestCookieAuthWithoutXSRFCookieDoesNotAddXSRFHeader(t *testing.T) {
 func TestDeleteV2(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/rest/api/2/issue/TEST-1", r.URL.Path)
-		assert.Equal(t, "jira-cli", r.Header.Get("X-Requested-By"))
+		assert.Empty(t, r.Header.Get("X-Requested-By"))
 
 		w.WriteHeader(204)
 	}))
 	defer server.Close()
 
 	client := NewClient(Config{Server: server.URL}, WithTimeout(3*time.Second))
-	resp, err := client.DeleteV2(context.Background(), "/issue/TEST-1", Header{
-		"X-Requested-By": "jira-cli",
-	})
+	resp, err := client.DeleteV2(context.Background(), "/issue/TEST-1", Header{})
 
 	assert.NoError(t, err)
 	assert.Equal(t, 204, resp.StatusCode)
