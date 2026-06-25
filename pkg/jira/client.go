@@ -42,6 +42,19 @@ var (
 	ErrNoResult = fmt.Errorf("jira: no result")
 	// ErrEmptyResponse denotes empty response from the server.
 	ErrEmptyResponse = fmt.Errorf("jira: empty response from server")
+
+	// browserHeaders mimics a Chrome on macOS same-origin fetch so Atlassian
+	// Cloud treats cookie-authenticated mutations like real browser traffic.
+	browserHeaders = Header{
+		"Accept-Language":    "en-GB,en-US;q=0.9,en;q=0.8",
+		"Sec-Ch-Ua":          `"Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"`,
+		"Sec-Ch-Ua-Mobile":   "?0",
+		"Sec-Ch-Ua-Platform": `"macOS"`,
+		"Sec-Fetch-Dest":     "empty",
+		"Sec-Fetch-Mode":     "cors",
+		"Sec-Fetch-Site":     "same-origin",
+		"Priority":           "u=1, i",
+	}
 )
 
 // ErrUnexpectedResponse denotes response code other than the expected one.
@@ -322,6 +335,10 @@ func (c *Client) setCookieAuth(req *http.Request, method string) {
 	if c.server != "" {
 		req.Header.Set("Origin", c.server)
 		req.Header.Set("Referer", c.server)
+	}
+
+	for key, value := range browserHeaders {
+		req.Header.Set(key, value)
 	}
 
 	if xsrfToken := xsrfTokenFromCookie(c.cookies); xsrfToken != "" {

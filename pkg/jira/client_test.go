@@ -218,7 +218,8 @@ func TestCookieAuthAddsXSRFHeaderForMutatingRequests(t *testing.T) {
 		expectedOrigin := "http://" + r.Host
 		assert.Equal(t, expectedOrigin, r.Header.Get("Origin"))
 		assert.Equal(t, expectedOrigin, r.Header.Get("Referer"))
-		assert.NotEmpty(t, r.Header.Get("User-Agent"))
+		assert.Equal(t, browserUserAgent, r.Header.Get("User-Agent"))
+		assertBrowserFingerprint(t, r)
 
 		w.WriteHeader(201)
 	}))
@@ -243,6 +244,7 @@ func TestCookieAuthWithoutXSRFCookieDoesNotAddXSRFHeader(t *testing.T) {
 		expectedOrigin := "http://" + r.Host
 		assert.Equal(t, expectedOrigin, r.Header.Get("Origin"))
 		assert.Equal(t, expectedOrigin, r.Header.Get("Referer"))
+		assertBrowserFingerprint(t, r)
 
 		w.WriteHeader(201)
 	}))
@@ -255,6 +257,22 @@ func TestCookieAuthWithoutXSRFCookieDoesNotAddXSRFHeader(t *testing.T) {
 	assert.Equal(t, 201, resp.StatusCode)
 
 	_ = resp.Body.Close()
+}
+
+func assertBrowserFingerprint(t *testing.T, r *http.Request) {
+	t.Helper()
+	for header, expected := range map[string]string{
+		"Accept-Language":    "en-GB,en-US;q=0.9,en;q=0.8",
+		"Sec-Ch-Ua":          `"Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"`,
+		"Sec-Ch-Ua-Mobile":   "?0",
+		"Sec-Ch-Ua-Platform": `"macOS"`,
+		"Sec-Fetch-Dest":     "empty",
+		"Sec-Fetch-Mode":     "cors",
+		"Sec-Fetch-Site":     "same-origin",
+		"Priority":           "u=1, i",
+	} {
+		assert.Equalf(t, expected, r.Header.Get(header), "mismatch for header %q", header)
+	}
 }
 
 func TestDeleteV2(t *testing.T) {
