@@ -319,6 +319,11 @@ func (c *Client) setCookieAuth(req *http.Request, method string) {
 		return
 	}
 
+	if c.server != "" {
+		req.Header.Set("Origin", c.server)
+		req.Header.Set("Referer", c.server)
+	}
+
 	if xsrfToken := xsrfTokenFromCookie(c.cookies); xsrfToken != "" {
 		req.Header.Set("atl-xsrf-token", xsrfToken)
 	}

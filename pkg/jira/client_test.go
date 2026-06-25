@@ -215,6 +215,9 @@ func TestCookieAuthAddsXSRFHeaderForMutatingRequests(t *testing.T) {
 		assert.Equal(t, "/rest/api/3/issue", r.URL.Path)
 		assert.Equal(t, cookies, r.Header.Get("Cookie"))
 		assert.Equal(t, "xsrf-123", r.Header.Get("atl-xsrf-token"))
+		expectedOrigin := "http://" + r.Host
+		assert.Equal(t, expectedOrigin, r.Header.Get("Origin"))
+		assert.Equal(t, expectedOrigin, r.Header.Get("Referer"))
 		assert.NotEmpty(t, r.Header.Get("User-Agent"))
 
 		w.WriteHeader(201)
@@ -237,6 +240,9 @@ func TestCookieAuthWithoutXSRFCookieDoesNotAddXSRFHeader(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, cookies, r.Header.Get("Cookie"))
 		assert.Empty(t, r.Header.Get("atl-xsrf-token"))
+		expectedOrigin := "http://" + r.Host
+		assert.Equal(t, expectedOrigin, r.Header.Get("Origin"))
+		assert.Equal(t, expectedOrigin, r.Header.Get("Referer"))
 
 		w.WriteHeader(201)
 	}))
