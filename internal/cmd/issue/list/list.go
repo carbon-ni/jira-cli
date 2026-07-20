@@ -109,23 +109,30 @@ func loadList(cmd *cobra.Command, args []string) {
 		cmdutil.ExitIfError(cmd.Flags().Set("jql", searchQuery))
 	}
 
-	issues, err := func() ([]*jira.Issue, error) {
+	issues, jql, err := func() ([]*jira.Issue, string, error) {
 		s := cmdutil.Info("Fetching issues...")
 		defer s.Stop()
 
 		q, err := query.NewIssue(project, cmd.Flags())
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 
 		resp, err := api.ProxySearch(api.DefaultClient(debug), q.Get(), q.Params().From, q.Params().Limit)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 
-		return resp.Issues, nil
+		return resp.Issues, q.Get(), nil
 	}()
 	cmdutil.ExitIfError(err)
+
+	// Agent-facing structured output (default: TOON). Routed before the legacy
+	// view so empty results are an explicit success with query context.
+	if format := cmdutil.OutputFormat(cmd); cmdutil.IsStructured(format) {
+		RenderStructured(issues, jql, format)
+		return
+	}
 
 	if len(issues) == 0 {
 		fmt.Println()

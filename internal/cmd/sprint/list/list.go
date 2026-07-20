@@ -78,39 +78,46 @@ func sprintList(cmd *cobra.Command, args []string) {
 	cmdutil.ExitIfError(err)
 
 	client := api.DefaultClient(debug)
+	format := cmdutil.OutputFormat(cmd)
 
 	sprintQuery, err := query.NewSprint(cmd.Flags())
 	cmdutil.ExitIfError(err)
 
 	if len(args) == 0 {
-		sprintExplorerView(sprintQuery, cmd.Flags(), boardID, project, server, client)
+		sprintExplorerView(sprintQuery, cmd.Flags(), boardID, project, server, client, format)
 	} else {
 		sprintID, err := strconv.Atoi(args[0])
 		cmdutil.ExitIfError(err)
 
-		singleSprintView(sprintQuery, cmd.Flags(), boardID, sprintID, project, server, client, nil)
+		singleSprintView(sprintQuery, cmd.Flags(), boardID, sprintID, project, server, client, nil, format)
 	}
 }
 
-func singleSprintView(sprintQuery *query.Sprint, flags query.FlagParser, boardID, sprintID int, project, server string, client *jira.Client, sprint *jira.Sprint) {
-	issues, err := func() ([]*jira.Issue, error) {
+func singleSprintView(sprintQuery *query.Sprint, flags query.FlagParser, boardID, sprintID int, project, server string, client *jira.Client, sprint *jira.Sprint, format string) {
+	issues, jql, err := func() ([]*jira.Issue, string, error) {
 		s := cmdutil.Info("Fetching sprint issues...")
 		defer s.Stop()
 
 		q, err := query.NewIssue(project, flags)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 		if sprintQuery.Params().ShowAllIssues {
 			q.Params().JQL = "project IS NOT EMPTY"
 		}
-		resp, err := client.SprintIssues(sprintID, q.Get(), q.Params().From, q.Params().Limit)
+		jql := q.Get()
+		resp, err := client.SprintIssues(sprintID, jql, q.Params().From, q.Params().Limit)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
-		return resp.Issues, nil
+		return resp.Issues, jql, nil
 	}()
 	cmdutil.ExitIfError(err)
+
+	if cmdutil.IsStructured(format) {
+		list.RenderStructured(issues, jql, format)
+		return
+	}
 
 	if len(issues) == 0 {
 		fmt.Println()
@@ -167,7 +174,7 @@ func singleSprintView(sprintQuery *query.Sprint, flags query.FlagParser, boardID
 		Data:       issues,
 		FooterText: ft,
 		Refresh: func() {
-			singleSprintView(sprintQuery, flags, boardID, sprintID, project, server, client, nil)
+			singleSprintView(sprintQuery, flags, boardID, sprintID, project, server, client, nil, format)
 		},
 		Display: view.DisplayFormat{
 			Plain:        plain,
@@ -190,7 +197,7 @@ func singleSprintView(sprintQuery *query.Sprint, flags query.FlagParser, boardID
 	cmdutil.ExitIfError(v.Render())
 }
 
-func sprintExplorerView(sprintQuery *query.Sprint, flags query.FlagParser, boardID int, project, server string, client *jira.Client) {
+func sprintExplorerView(sprintQuery *query.Sprint, flags query.FlagParser, boardID int, project, server string, client *jira.Client, format string) {
 	sprints := func() []*jira.Sprint {
 		s := cmdutil.Info("Fetching sprints...")
 		defer s.Stop()
@@ -198,6 +205,10 @@ func sprintExplorerView(sprintQuery *query.Sprint, flags query.FlagParser, board
 		return client.SprintsInBoards([]int{boardID}, sprintQuery.Get(), numSprints)
 	}()
 	if len(sprints) == 0 {
+		if cmdutil.IsStructured(format) {
+			renderStructured(nil, project, viper.GetString("board.name"), format)
+			return
+		}
 		fmt.Println()
 		cmdutil.Failed("No result found for given query in project %q", project)
 		return
@@ -208,7 +219,12 @@ func sprintExplorerView(sprintQuery *query.Sprint, flags query.FlagParser, board
 		if sprintQuery.Params().Next {
 			sprint = sprints[len(sprints)-1]
 		}
-		singleSprintView(sprintQuery, flags, boardID, sprint.ID, project, server, client, sprint)
+		singleSprintView(sprintQuery, flags, boardID, sprint.ID, project, server, client, sprint, format)
+		return
+	}
+
+	if cmdutil.IsStructured(format) {
+		renderStructured(sprints, project, viper.GetString("board.name"), format)
 		return
 	}
 

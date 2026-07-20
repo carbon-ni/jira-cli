@@ -25,6 +25,7 @@ require (
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.10.0
+	github.com/toon-format/toon-go v0.0.0-20260720073316-466d6f2e74e0
 	github.com/zalando/go-keyring v0.2.6
 	golang.org/x/term v0.30.0
 )
@@ -80,3 +81,5 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/toon-format/toon-go => github.com/carbon-ni/toon-go v0.0.0-20260720073316-466d6f2e74e0

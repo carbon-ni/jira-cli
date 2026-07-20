@@ -17,19 +17,25 @@ var (
 	Platform        = fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
 )
 
-// Info returns version and build information.
-func Info() string {
+// CommitDate returns the build commit date in RFC3339 form, or an empty string
+// when the source date epoch was not set.
+func CommitDate() (string, error) {
 	i, err := strconv.ParseInt(SourceDateEpoch, 10, 64) //nolint:gomnd
 	if err != nil {
-		panic(err)
+		return "", err
 	}
-	commitDate := ""
-	if i >= 0 {
-		// https://pkg.go.dev/time#Time.Format
-		//
-		//     $ TZ=MST date -Iseconds -d"Jan 2 15:04:05 2006 MST"
-		//     2006-01-02T15:04:05-07:00
-		commitDate = time.Unix(i, 0).UTC().Format("2006-01-02T15:04:05-07:00")
+	if i < 0 {
+		return "", nil
+	}
+	// https://pkg.go.dev/time#Time.Format
+	return time.Unix(i, 0).UTC().Format("2006-01-02T15:04:05-07:00"), nil
+}
+
+// Info returns version and build information.
+func Info() string {
+	commitDate, err := CommitDate()
+	if err != nil {
+		panic(err)
 	}
 	return fmt.Sprintf(
 		"(Version=%q, GitCommit=%q, CommitDate=%q, GoVersion=%q, Compiler=%q, Platform=%q)",

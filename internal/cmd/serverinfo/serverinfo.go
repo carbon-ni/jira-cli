@@ -36,6 +36,11 @@ func serverInfo(cmd *cobra.Command, _ []string) {
 	}()
 	cmdutil.ExitIfError(err)
 
+	if format := cmdutil.OutputFormat(cmd); cmdutil.IsStructured(format) {
+		renderStructured(info, format)
+		return
+	}
+
 	v := view.NewServerInfo(info)
 
 	cmdutil.ExitIfError(v.Render())

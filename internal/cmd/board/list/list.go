@@ -47,6 +47,11 @@ func List(cmd *cobra.Command, _ []string) {
 		total = len(boards)
 	}
 
+	if format := cmdutil.OutputFormat(cmd); cmdutil.IsStructured(format) {
+		renderStructured(boards, total, project, format)
+		return
+	}
+
 	if total == 0 {
 		fmt.Println()
 		cmdutil.Failed("No boards found in project %q", project)

@@ -39,6 +39,11 @@ func List(cmd *cobra.Command, _ []string) {
 	}()
 	cmdutil.ExitIfError(err)
 
+	if format := cmdutil.OutputFormat(cmd); cmdutil.IsStructured(format) {
+		renderStructured(releases, project, format)
+		return
+	}
+
 	if total == 0 {
 		cmdutil.Failed("No releases found.")
 		return

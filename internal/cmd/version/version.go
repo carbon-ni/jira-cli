@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/ankitpokhrel/jira-cli/internal/cmdutil"
 	v "github.com/ankitpokhrel/jira-cli/internal/version"
 )
 
@@ -19,6 +20,10 @@ func NewCmdVersion() *cobra.Command {
 	}
 }
 
-func version(*cobra.Command, []string) {
+func version(cmd *cobra.Command, _ []string) {
+	if format := cmdutil.OutputFormat(cmd); cmdutil.IsStructured(format) {
+		renderStructured(format)
+		return
+	}
 	fmt.Println(v.Info())
 }

@@ -82,6 +82,15 @@ func NewCmdRoot() *cobra.Command {
 			return cmd.Help()
 		},
 		PersistentPreRun: func(cmd *cobra.Command, _ []string) {
+			if f := cmd.Flags().Lookup("format"); f != nil && f.Changed {
+				val := f.Value.String()
+				if !cmdutil.IsValidFormat(val) {
+					fmt.Fprintf(os.Stderr,
+						"Error: invalid --format %q (valid: auto, toon, json)\n", val)
+					os.Exit(2)
+				}
+			}
+
 			subCmd := cmd.Name()
 			if !cmdRequireToken(subCmd) {
 				return
@@ -120,6 +129,7 @@ func NewCmdRoot() *cobra.Command {
 		),
 	)
 	cmd.PersistentFlags().BoolVar(&debug, "debug", false, "Turn on debug output")
+	cmd.PersistentFlags().String("format", cmdutil.DefaultFormat, cmdutil.FormatFlagUsage)
 
 	cmd.SetHelpFunc(helpFunc)
 

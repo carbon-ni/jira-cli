@@ -6,10 +6,14 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/ankitpokhrel/jira-cli/api"
+	"github.com/ankitpokhrel/jira-cli/internal/cmdutil"
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
 )
 
@@ -17,7 +21,8 @@ func TestMePrintsConfiguredLogin(t *testing.T) {
 	viper.Reset()
 	viper.Set("login", "configured-user")
 
-	got := captureStdout(t, func() { me(nil, nil) })
+	cmd := humanCmd(t)
+	got := captureStdout(t, func() { me(cmd, nil) })
 
 	if got != "configured-user\n" {
 		t.Fatalf("expected configured login, got %q", got)
@@ -26,6 +31,7 @@ func TestMePrintsConfiguredLogin(t *testing.T) {
 
 func TestMeFetchesCurrentUserWhenLoginIsEmpty(t *testing.T) {
 	viper.Reset()
+	api.ResetClient()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/rest/api/2/myself" {
 			t.Fatalf("expected /rest/api/2/myself, got %s", r.URL.Path)
@@ -43,10 +49,75 @@ func TestMeFetchesCurrentUserWhenLoginIsEmpty(t *testing.T) {
 	viper.Set("auth_type", "cookie")
 	viper.Set("cookies", "cloud.session=abc")
 
-	got := captureStdout(t, func() { me(nil, nil) })
+	cmd := humanCmd(t)
+	got := captureStdout(t, func() { me(cmd, nil) })
 
 	if got != "cookie-user\n" {
 		t.Fatalf("expected fetched login, got %q", got)
+	}
+}
+
+func TestMeStructuredTOONEmitsFullProfile(t *testing.T) {
+	viper.Reset()
+	api.ResetClient()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/rest/api/2/myself" {
+			t.Fatalf("expected /rest/api/2/myself, got %s", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"name":"ada","accountId":"5e4:abc","displayName":"Ada Lovelace","emailAddress":"ada@example.com","timeZone":"UTC"}`))
+	}))
+	defer server.Close()
+
+	viper.Set("server", server.URL)
+	viper.Set("auth_type", "cookie")
+	viper.Set("cookies", "cloud.session=abc")
+
+	cmd := &cobra.Command{}
+	cmd.Flags().String("format", cmdutil.FormatAuto, "")
+	if err := cmd.Flags().Set("format", cmdutil.FormatTOON); err != nil {
+		t.Fatalf("set format: %v", err)
+	}
+
+	got := captureStdout(t, func() { me(cmd, nil) })
+
+	// TOON object preserving jira.Me json-tag order; accountId is quoted because
+	// it contains a colon (TOON §7.2). No trailing newline.
+	want := "name: ada\naccountId: \"5e4:abc\"\ndisplayName: Ada Lovelace\nemailAddress: ada@example.com\ntimeZone: UTC"
+	if got != want {
+		t.Fatalf("TOON mismatch\nwant: %q\n got: %q", want, got)
+	}
+	if strings.HasSuffix(got, "\n") {
+		t.Fatalf("TOON output must not end with a newline, got %q", got)
+	}
+}
+
+func TestMeStructuredJSONEmitsValidJSON(t *testing.T) {
+	viper.Reset()
+	api.ResetClient()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"name":"ada","accountId":"id","displayName":"Ada","emailAddress":"ada@example.com","timeZone":"UTC"}`))
+	}))
+	defer server.Close()
+
+	viper.Set("server", server.URL)
+	viper.Set("auth_type", "cookie")
+	viper.Set("cookies", "cloud.session=abc")
+
+	cmd := &cobra.Command{}
+	cmd.Flags().String("format", cmdutil.FormatAuto, "")
+	if err := cmd.Flags().Set("format", cmdutil.FormatJSON); err != nil {
+		t.Fatalf("set format: %v", err)
+	}
+
+	got := captureStdout(t, func() { me(cmd, nil) })
+
+	if !strings.HasSuffix(got, "\n") {
+		t.Fatalf("JSON output should end with a newline, got %q", got)
+	}
+	if got != strings.TrimRight(got, "\n")+"\n" {
+		t.Fatalf("JSON output should have exactly one trailing newline, got %q", got)
 	}
 }
 
@@ -68,6 +139,18 @@ func TestCurrentUserIdentifierFallsBackWhenLoginIsEmpty(t *testing.T) {
 			}
 		})
 	}
+}
+
+// humanCmd returns a command pinned to the legacy (auto) rendering, used by
+// tests that exercise the non-structured path now that TOON is the default.
+func humanCmd(t *testing.T) *cobra.Command {
+	t.Helper()
+	cmd := &cobra.Command{}
+	cmd.Flags().String("format", cmdutil.FormatAuto, "")
+	if err := cmd.Flags().Set("format", cmdutil.FormatAuto); err != nil {
+		t.Fatalf("set format: %v", err)
+	}
+	return cmd
 }
 
 func captureStdout(t *testing.T, fn func()) string {

@@ -85,6 +85,12 @@ func Client(config jira.Config) *jira.Client {
 	return jiraClient
 }
 
+// ResetClient clears the cached jira client. It is intended for tests that
+// reconfigure viper/server between subtests; production code never needs it.
+func ResetClient() {
+	jiraClient = nil
+}
+
 func readCookieFile() string {
 	configDir, err := configHome()
 	if err != nil {

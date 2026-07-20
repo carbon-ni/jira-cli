@@ -73,6 +73,7 @@ func epicList(cmd *cobra.Command, args []string) {
 	server := viper.GetString("server")
 	project := viper.GetString("project.key")
 	projectType := viper.GetString("project.type")
+	format := cmdutil.OutputFormat(cmd)
 
 	debug, err := cmd.Flags().GetBool("debug")
 	cmdutil.ExitIfError(err)
@@ -80,24 +81,24 @@ func epicList(cmd *cobra.Command, args []string) {
 	client := api.DefaultClient(debug)
 
 	if len(args) == 0 {
-		epicExplorerView(cmd, cmd.Flags(), project, projectType, server, client)
+		epicExplorerView(cmd, cmd.Flags(), project, projectType, server, client, format)
 	} else {
 		key := cmdutil.GetJiraIssueKey(project, args[0])
-		singleEpicView(cmd.Flags(), key, project, projectType, server, client)
+		singleEpicView(cmd.Flags(), key, project, projectType, server, client, format)
 	}
 }
 
-func singleEpicView(flags query.FlagParser, key, project, projectType, server string, client *jira.Client) {
+func singleEpicView(flags query.FlagParser, key, project, projectType, server string, client *jira.Client, format string) {
 	err := flags.Set("type", "") // Unset issue type.
 	cmdutil.ExitIfError(err)
 
-	issues, err := func() ([]*jira.Issue, error) {
+	issues, jql, err := func() ([]*jira.Issue, string, error) {
 		s := cmdutil.Info("Fetching epic issues...")
 		defer s.Stop()
 
 		q, err := query.NewIssue(project, flags)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 
 		var resp *jira.SearchResult
@@ -112,11 +113,16 @@ func singleEpicView(flags query.FlagParser, key, project, projectType, server st
 		}
 
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
-		return resp.Issues, nil
+		return resp.Issues, q.Get(), nil
 	}()
 	cmdutil.ExitIfError(err)
+
+	if cmdutil.IsStructured(format) {
+		list.RenderStructured(issues, jql, format)
+		return
+	}
 
 	if len(issues) == 0 {
 		fmt.Println()
@@ -150,7 +156,7 @@ func singleEpicView(flags query.FlagParser, key, project, projectType, server st
 		Server:  server,
 		Data:    issues,
 		Refresh: func() {
-			singleEpicView(flags, key, project, projectType, server, client)
+			singleEpicView(flags, key, project, projectType, server, client, format)
 		},
 		Display: view.DisplayFormat{
 			Plain:        plain,
@@ -173,7 +179,7 @@ func singleEpicView(flags query.FlagParser, key, project, projectType, server st
 	cmdutil.ExitIfError(v.Render())
 }
 
-func epicExplorerView(cmd *cobra.Command, flags query.FlagParser, project, projectType, server string, client *jira.Client) {
+func epicExplorerView(cmd *cobra.Command, flags query.FlagParser, project, projectType, server string, client *jira.Client, format string) {
 	q, err := query.NewIssue(project, flags)
 	cmdutil.ExitIfError(err)
 
@@ -190,8 +196,17 @@ func epicExplorerView(cmd *cobra.Command, flags query.FlagParser, project, proje
 	cmdutil.ExitIfError(err)
 
 	if len(epics) == 0 {
+		if cmdutil.IsStructured(format) {
+			renderEpicListStructured(nil, project, format)
+			return
+		}
 		fmt.Println()
 		cmdutil.Failed("No result found for given query in project %q", project)
+		return
+	}
+
+	if cmdutil.IsStructured(format) {
+		renderEpicListStructured(epics, project, format)
 		return
 	}
 
