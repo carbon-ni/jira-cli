@@ -4,7 +4,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/ankitpokhrel/jira-cli/api"
 	"github.com/ankitpokhrel/jira-cli/internal/cmdutil"
 	"github.com/ankitpokhrel/jira-cli/internal/view"
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
@@ -31,7 +30,7 @@ func List(cmd *cobra.Command, _ []string) {
 		s := cmdutil.Info("Fetching project versions...")
 		defer s.Stop()
 
-		releases, err := api.DefaultClient(debug).Release(project)
+		releases, err := cmdutil.NewJiraClient(debug).Release(project)
 		if err != nil {
 			return nil, 0, err
 		}

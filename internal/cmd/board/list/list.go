@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/ankitpokhrel/jira-cli/api"
 	"github.com/ankitpokhrel/jira-cli/internal/cmdutil"
 	"github.com/ankitpokhrel/jira-cli/internal/view"
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
@@ -34,7 +33,7 @@ func List(cmd *cobra.Command, _ []string) {
 		s := cmdutil.Info(fmt.Sprintf("Fetching boards in project %s...", project))
 		defer s.Stop()
 
-		resp, err := api.DefaultClient(debug).Boards(project, jira.BoardTypeAll)
+		resp, err := cmdutil.NewJiraClient(debug).Boards(project, jira.BoardTypeAll)
 		if err != nil {
 			return nil, 0, err
 		}

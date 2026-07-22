@@ -1,40 +1,24 @@
 package api
 
 import (
-	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
-	"github.com/zalando/go-keyring"
 
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
-	"github.com/ankitpokhrel/jira-cli/pkg/netrc"
 )
 
-const (
-	clientTimeout            = 15 * time.Second
-	cookieConfigDir          = ".jira"
-	atlassianCookieConfigDir = "atlassian"
-	cookieFileName           = "cookies.txt"
-)
+const clientTimeout = 15 * time.Second
 
 var jiraClient *jira.Client
 
-// Client initializes and returns jira client.
+// Client creates or returns the cached jira client.
+// The caller is responsible for supplying a fully-resolved config.
+// Use cmdutil.NewJiraClient for auto-resolution from environment.
 func Client(config jira.Config) *jira.Client {
 	if jiraClient != nil {
 		return jiraClient
 	}
-
-	resolveServerAndLogin(&config)
-	resolveAPIToken(&config)
-	resolveCookies(&config)
-	resolveAuthType(&config)
-	resolveInsecure(&config)
-	resolveMTLS(&config)
 
 	jiraClient = jira.NewClient(
 		config,
@@ -45,118 +29,10 @@ func Client(config jira.Config) *jira.Client {
 	return jiraClient
 }
 
-func resolveServerAndLogin(config *jira.Config) {
-	if config.Server == "" {
-		config.Server = viper.GetString("server")
-	}
-	if config.Login == "" {
-		config.Login = viper.GetString("login")
-	}
-}
-
-func resolveAPIToken(config *jira.Config) {
-	if config.APIToken != "" {
-		return
-	}
-
-	config.APIToken = viper.GetString("api_token")
-	if config.APIToken != "" {
-		return
-	}
-
-	netrcConfig, _ := netrc.Read(config.Server, config.Login)
-	if netrcConfig != nil {
-		config.APIToken = netrcConfig.Password
-		return
-	}
-
-	secret, _ := keyring.Get("jira-cli", config.Login)
-	config.APIToken = secret
-}
-
-func resolveCookies(config *jira.Config) {
-	if config.Cookies != "" {
-		return
-	}
-
-	config.Cookies = viper.GetString("cookies")
-	if config.Cookies != "" {
-		return
-	}
-
-	config.Cookies = readCookieFile()
-}
-
-func resolveAuthType(config *jira.Config) {
-	if config.AuthType != nil {
-		return
-	}
-
-	authType := jira.AuthType(viper.GetString("auth_type"))
-	config.AuthType = &authType
-}
-
-func resolveInsecure(config *jira.Config) {
-	if config.Insecure != nil {
-		return
-	}
-
-	insecure := viper.GetBool("insecure")
-	config.Insecure = &insecure
-}
-
-func resolveMTLS(config *jira.Config) {
-	if config.MTLSConfig.CaCert == "" {
-		config.MTLSConfig.CaCert = viper.GetString("mtls.ca_cert")
-	}
-	if config.MTLSConfig.ClientCert == "" {
-		config.MTLSConfig.ClientCert = viper.GetString("mtls.client_cert")
-	}
-	if config.MTLSConfig.ClientKey == "" {
-		config.MTLSConfig.ClientKey = viper.GetString("mtls.client_key")
-	}
-}
-
 // ResetClient clears the cached jira client. It is intended for tests that
 // reconfigure viper/server between subtests; production code never needs it.
 func ResetClient() {
 	jiraClient = nil
-}
-
-func readCookieFile() string {
-	configDir, err := configHome()
-	if err != nil {
-		return ""
-	}
-
-	for _, path := range []string{
-		filepath.Join(configDir, cookieConfigDir, cookieFileName),
-		filepath.Join(configDir, atlassianCookieConfigDir, cookieFileName),
-	} {
-		cookies, err := os.ReadFile(path)
-		if err == nil {
-			return strings.TrimSpace(string(cookies))
-		}
-	}
-
-	return ""
-}
-
-func configHome() (string, error) {
-	if home := os.Getenv("XDG_CONFIG_HOME"); home != "" {
-		return home, nil
-	}
-
-	home, err := homedir.Dir()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(home, ".config"), nil
-}
-
-// DefaultClient returns default jira client.
-func DefaultClient(debug bool) *jira.Client {
-	return Client(jira.Config{Debug: debug})
 }
 
 // ProxyCreate uses either a v2 or v3 version of the Jira POST /issue

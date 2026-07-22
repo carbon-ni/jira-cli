@@ -8,6 +8,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/ankitpokhrel/jira-cli/api"
+	"github.com/ankitpokhrel/jira-cli/internal/cmdutil"
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
 	"github.com/ankitpokhrel/jira-cli/pkg/tui"
 )
@@ -72,7 +73,7 @@ func (l *IssueList) Render() error {
 		tui.WithViewModeFunc(func(r, c int, _ any) (func() any, func(any) (string, error)) {
 			dataFn := func() any {
 				ci := data.GetIndex(fieldKey)
-				iss, _ := api.ProxyGetIssue(api.DefaultClient(false), data.Get(r, ci), jira.NewNumCommentsFilter(l.Display.Comments))
+				iss, _ := api.ProxyGetIssue(cmdutil.NewJiraClient(false), data.Get(r, ci), jira.NewNumCommentsFilter(l.Display.Comments))
 				return iss
 			}
 			renderFn := func(i any) (string, error) {
@@ -90,7 +91,7 @@ func (l *IssueList) Render() error {
 		tui.WithMoveFunc(func(r, c int) func() (string, []string, tui.MoveHandlerFunc, string, tui.RefreshTableStateFunc) {
 			dataFn := func() (string, []string, tui.MoveHandlerFunc, string, tui.RefreshTableStateFunc) {
 				key := data[r][data.GetIndex(fieldKey)]
-				client := api.DefaultClient(false)
+				client := cmdutil.NewJiraClient(false)
 				transitions, _ := api.ProxyTransitions(client, key)
 
 				actions := make([]string, 0, len(transitions))

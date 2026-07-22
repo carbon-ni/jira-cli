@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/ankitpokhrel/jira-cli/api"
 	"github.com/ankitpokhrel/jira-cli/internal/cmdutil"
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
 )
@@ -35,7 +34,7 @@ func me(cmd *cobra.Command, _ []string) {
 		return
 	}
 
-	currentUser, err := api.Client(jira.Config{}).Me()
+	currentUser, err := cmdutil.NewJiraClient(false).Me()
 	if err != nil {
 		cmdutil.Failed("Error: %s", err)
 		return
@@ -59,7 +58,7 @@ type profile struct {
 // agents receive the canonical account (id, email, timezone) rather than the
 // configured-login shortcut used by the human-oriented path.
 func meStructured(format string) {
-	user, err := api.Client(jira.Config{}).Me()
+	user, err := cmdutil.NewJiraClient(false).Me()
 	if err != nil {
 		os.Exit(cmdutil.PrintStructuredError(cmdutil.ErrorEnvelope{
 			Error: cmdutil.ErrorBody{

@@ -118,7 +118,7 @@ func loadList(cmd *cobra.Command, args []string) {
 			return nil, "", err
 		}
 
-		resp, err := api.ProxySearch(api.DefaultClient(debug), q.Get(), q.Params().From, q.Params().Limit)
+		resp, err := api.ProxySearch(cmdutil.NewJiraClient(debug), q.Get(), q.Params().From, q.Params().Limit)
 		if err != nil {
 			return nil, "", err
 		}

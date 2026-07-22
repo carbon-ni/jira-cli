@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/ankitpokhrel/jira-cli/api"
 	"github.com/ankitpokhrel/jira-cli/internal/cmdutil"
 	"github.com/ankitpokhrel/jira-cli/internal/query"
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
@@ -38,7 +37,7 @@ func remove(cmd *cobra.Command, args []string) {
 	project := viper.GetString("project.key")
 	projectType := viper.GetString("project.type")
 	params := parseFlags(cmd.Flags(), args, project)
-	client := api.DefaultClient(params.debug)
+	client := cmdutil.NewJiraClient(params.debug)
 
 	qs := getQuestions(params)
 	if len(qs) > 0 {

@@ -3,7 +3,6 @@ package list
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/ankitpokhrel/jira-cli/api"
 	"github.com/ankitpokhrel/jira-cli/internal/cmdutil"
 	"github.com/ankitpokhrel/jira-cli/internal/view"
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
@@ -29,7 +28,7 @@ func List(cmd *cobra.Command, _ []string) {
 		s := cmdutil.Info("Fetching projects...")
 		defer s.Stop()
 
-		projects, err := api.DefaultClient(debug).Project()
+		projects, err := cmdutil.NewJiraClient(debug).Project()
 		if err != nil {
 			return nil, 0, err
 		}

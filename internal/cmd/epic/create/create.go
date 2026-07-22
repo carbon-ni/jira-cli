@@ -5,7 +5,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/ankitpokhrel/jira-cli/api"
 	"github.com/ankitpokhrel/jira-cli/internal/cmdcommon"
 	"github.com/ankitpokhrel/jira-cli/internal/cmdutil"
 	"github.com/ankitpokhrel/jira-cli/internal/query"
@@ -52,7 +51,7 @@ func create(cmd *cobra.Command, _ []string) {
 	installation := viper.GetString("installation")
 
 	params := parseFlags(cmd.Flags())
-	client := api.DefaultClient(params.Debug)
+	client := cmdutil.NewJiraClient(params.Debug)
 	cc := createCmd{
 		client: client,
 		params: params,

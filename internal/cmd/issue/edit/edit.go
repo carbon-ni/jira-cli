@@ -60,7 +60,7 @@ func edit(cmd *cobra.Command, args []string) {
 	project := viper.GetString("project.key")
 
 	params := parseArgsAndFlags(cmd.Flags(), args, project)
-	client := api.DefaultClient(params.debug)
+	client := cmdutil.NewJiraClient(params.debug)
 	ec := editCmd{
 		client: client,
 		params: params,

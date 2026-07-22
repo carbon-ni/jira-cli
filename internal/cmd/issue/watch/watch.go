@@ -52,7 +52,7 @@ WATCHER	Email or display name of the user to add to issue watchers`,
 func watch(cmd *cobra.Command, args []string) {
 	project := viper.GetString("project.key")
 	params := parseArgsAndFlags(cmd.Flags(), args, project)
-	client := api.DefaultClient(params.debug)
+	client := cmdutil.NewJiraClient(params.debug)
 	ac := watchCmd{
 		client: client,
 		users:  nil,

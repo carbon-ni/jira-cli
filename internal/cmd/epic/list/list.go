@@ -78,7 +78,7 @@ func epicList(cmd *cobra.Command, args []string) {
 	debug, err := cmd.Flags().GetBool("debug")
 	cmdutil.ExitIfError(err)
 
-	client := api.DefaultClient(debug)
+	client := cmdutil.NewJiraClient(debug)
 
 	if len(args) == 0 {
 		epicExplorerView(cmd, cmd.Flags(), project, projectType, server, client, format)

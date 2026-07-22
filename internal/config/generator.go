@@ -12,7 +12,6 @@ import (
 	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/spf13/viper"
 
-	"github.com/ankitpokhrel/jira-cli/api"
 	"github.com/ankitpokhrel/jira-cli/internal/cmdutil"
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
 )
@@ -420,7 +419,7 @@ func (c *JiraCLIConfigGenerator) verifyLoginDetails(server, login string) error 
 
 	server = strings.TrimRight(server, "/")
 
-	c.jiraClient = api.Client(jira.Config{
+	c.jiraClient = cmdutil.NewJiraClientWith(jira.Config{
 		Server:   server,
 		Login:    login,
 		Insecure: &c.usrCfg.Insecure,
@@ -453,7 +452,7 @@ func (c *JiraCLIConfigGenerator) configureServerMeta(server, login string) error
 
 	server = strings.TrimRight(server, "/")
 
-	c.jiraClient = api.Client(jira.Config{
+	c.jiraClient = cmdutil.NewJiraClientWith(jira.Config{
 		Server:   server,
 		Login:    login,
 		Insecure: &c.usrCfg.Insecure,

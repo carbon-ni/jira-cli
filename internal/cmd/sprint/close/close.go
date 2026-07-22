@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/ankitpokhrel/jira-cli/api"
 	"github.com/ankitpokhrel/jira-cli/internal/cmdutil"
 	"github.com/ankitpokhrel/jira-cli/internal/query"
 	"github.com/spf13/cobra"
@@ -33,7 +32,7 @@ func NewCmdClose() *cobra.Command {
 
 func closeSprint(cmd *cobra.Command, args []string) {
 	params := parseFlags(cmd.Flags(), args)
-	client := api.DefaultClient(params.debug)
+	client := cmdutil.NewJiraClient(params.debug)
 
 	qs := getQuestions(params)
 	if len(qs) > 0 {

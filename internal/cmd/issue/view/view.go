@@ -76,7 +76,7 @@ func viewRaw(cmd *cobra.Command, args []string) {
 		s := cmdutil.Info(messageFetchingData)
 		defer s.Stop()
 
-		client := api.DefaultClient(debug)
+		client := cmdutil.NewJiraClient(debug)
 		return api.ProxyGetIssueRaw(client, key)
 	}()
 	cmdutil.ExitIfError(err)
@@ -102,7 +102,7 @@ func viewPretty(cmd *cobra.Command, args []string) {
 		s := cmdutil.Info(messageFetchingData)
 		defer s.Stop()
 
-		client := api.DefaultClient(debug)
+		client := cmdutil.NewJiraClient(debug)
 		return api.ProxyGetIssue(client, key, jira.NewNumCommentsFilter(comments))
 	}()
 	cmdutil.ExitIfError(err)

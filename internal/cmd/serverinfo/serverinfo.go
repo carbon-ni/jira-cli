@@ -3,7 +3,6 @@ package serverinfo
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/ankitpokhrel/jira-cli/api"
 	"github.com/ankitpokhrel/jira-cli/internal/cmdutil"
 	"github.com/ankitpokhrel/jira-cli/internal/view"
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
@@ -28,7 +27,7 @@ func serverInfo(cmd *cobra.Command, _ []string) {
 		s := cmdutil.Info("Fetching server info...")
 		defer s.Stop()
 
-		info, err := api.DefaultClient(debug).ServerInfo()
+		info, err := cmdutil.NewJiraClient(debug).ServerInfo()
 		if err != nil {
 			return nil, err
 		}

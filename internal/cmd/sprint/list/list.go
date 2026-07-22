@@ -9,7 +9,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/ankitpokhrel/jira-cli/api"
 	"github.com/ankitpokhrel/jira-cli/internal/cmd/issue/list"
 	"github.com/ankitpokhrel/jira-cli/internal/cmdutil"
 	"github.com/ankitpokhrel/jira-cli/internal/query"
@@ -77,7 +76,7 @@ func sprintList(cmd *cobra.Command, args []string) {
 	debug, err := cmd.Flags().GetBool("debug")
 	cmdutil.ExitIfError(err)
 
-	client := api.DefaultClient(debug)
+	client := cmdutil.NewJiraClient(debug)
 	format := cmdutil.OutputFormat(cmd)
 
 	sprintQuery, err := query.NewSprint(cmd.Flags())

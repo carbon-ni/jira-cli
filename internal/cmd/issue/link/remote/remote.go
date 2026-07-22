@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/ankitpokhrel/jira-cli/api"
 	"github.com/ankitpokhrel/jira-cli/internal/cmdutil"
 	"github.com/ankitpokhrel/jira-cli/internal/query"
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
@@ -40,7 +39,7 @@ func NewCmdRemoteLink() *cobra.Command {
 func remotelink(cmd *cobra.Command, args []string) {
 	project := viper.GetString("project.key")
 	params := parseArgsAndFlags(cmd.Flags(), args, project)
-	client := api.DefaultClient(params.debug)
+	client := cmdutil.NewJiraClient(params.debug)
 	lc := linkCmd{
 		client: client,
 		params: params,
