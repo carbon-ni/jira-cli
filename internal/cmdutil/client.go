@@ -65,6 +65,9 @@ func resolveConfig(config *jira.Config) {
 		insecure := viper.GetBool("insecure")
 		config.Insecure = &insecure
 	}
+	if config.Installation == "" {
+		config.Installation = viper.GetString("installation")
+	}
 	if config.MTLSConfig.CaCert == "" {
 		config.MTLSConfig.CaCert = viper.GetString("mtls.ca_cert")
 	}

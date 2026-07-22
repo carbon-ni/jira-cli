@@ -127,27 +127,38 @@ type MTLSConfig struct {
 
 // Config is a jira config.
 type Config struct {
-	Server     string
-	Login      string
-	APIToken   string
-	Cookies    string
-	AuthType   *AuthType
-	Insecure   *bool
-	Debug      bool
-	MTLSConfig MTLSConfig
+	Server       string
+	Login        string
+	APIToken     string
+	Cookies      string
+	AuthType     *AuthType
+	Insecure     *bool
+	Debug        bool
+	Installation string
+	MTLSConfig   MTLSConfig
 }
 
 // Client is a jira client.
 type Client struct {
-	transport http.RoundTripper
-	insecure  bool
-	server    string
-	login     string
-	authType  *AuthType
-	token     string
-	cookies   string
-	timeout   time.Duration
-	debug     bool
+	transport    http.RoundTripper
+	insecure     bool
+	server       string
+	login        string
+	authType     *AuthType
+	token        string
+	cookies      string
+	timeout      time.Duration
+	debug        bool
+	installation string
+}
+
+// InstallationType returns the configured Jira installation type.
+// Returns InstallationTypeCloud if not explicitly configured.
+func (c *Client) InstallationType() string {
+	if c.installation == "" {
+		return InstallationTypeCloud
+	}
+	return c.installation
 }
 
 // ClientFunc decorates option for client.
@@ -156,12 +167,13 @@ type ClientFunc func(*Client)
 // NewClient instantiates new jira client.
 func NewClient(c Config, opts ...ClientFunc) *Client {
 	client := Client{
-		server:   strings.TrimSuffix(c.Server, "/"),
-		login:    c.Login,
-		token:    c.APIToken,
-		cookies:  c.Cookies,
-		authType: c.AuthType,
-		debug:    c.Debug,
+		server:       strings.TrimSuffix(c.Server, "/"),
+		login:        c.Login,
+		token:        c.APIToken,
+		cookies:      c.Cookies,
+		authType:     c.AuthType,
+		debug:        c.Debug,
+		installation: c.Installation,
 	}
 
 	for _, opt := range opts {

@@ -3,8 +3,6 @@ package api
 import (
 	"time"
 
-	"github.com/spf13/viper"
-
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
 )
 
@@ -44,7 +42,7 @@ func ProxyCreate(c *jira.Client, cr *jira.CreateRequest) (*jira.CreateResponse, 
 		err  error
 	)
 
-	it := viper.GetString("installation")
+	it := c.InstallationType()
 
 	if it == jira.InstallationTypeLocal {
 		resp, err = c.CreateV2(cr)
@@ -57,8 +55,7 @@ func ProxyCreate(c *jira.Client, cr *jira.CreateRequest) (*jira.CreateResponse, 
 
 // ProxyGetIssueRaw executes the same request as ProxyGetIssue but returns raw API response body string.
 func ProxyGetIssueRaw(c *jira.Client, key string) (string, error) {
-	it := viper.GetString("installation")
-	if it == jira.InstallationTypeLocal {
+	if c.InstallationType() == jira.InstallationTypeLocal {
 		return c.GetIssueV2Raw(key)
 	}
 	return c.GetIssueRaw(key)
@@ -73,7 +70,7 @@ func ProxyGetIssue(c *jira.Client, key string, opts ...jira.Filter) (*jira.Issue
 		err error
 	)
 
-	it := viper.GetString("installation")
+	it := c.InstallationType()
 
 	if it == jira.InstallationTypeLocal {
 		iss, err = c.GetIssueV2(key, opts...)
@@ -93,7 +90,7 @@ func ProxySearch(c *jira.Client, jql string, from, limit uint) (*jira.SearchResu
 		err    error
 	)
 
-	it := viper.GetString("installation")
+	it := c.InstallationType()
 
 	if it == jira.InstallationTypeLocal {
 		issues, err = c.SearchV2(jql, from, limit)
@@ -106,9 +103,8 @@ func ProxySearch(c *jira.Client, jql string, from, limit uint) (*jira.SearchResu
 
 // ProxyAssignIssue uses either a v2 or v3 version of the PUT /issue/{key}/assignee
 // endpoint to assign an issue to the user.
-// Defaults to v3 if installation type is not defined in the config.
 func ProxyAssignIssue(c *jira.Client, key string, user *jira.User, def string) error {
-	it := viper.GetString("installation")
+	it := c.InstallationType()
 	assignee := def
 
 	if user != nil {
@@ -128,16 +124,13 @@ func ProxyAssignIssue(c *jira.Client, key string, user *jira.User, def string) e
 
 // ProxyUserSearch uses either v2 or v3 version of the GET /user/assignable/search
 // endpoint to search for the users assignable to the given issue.
-// Defaults to v3 if installation type is not defined in the config.
 func ProxyUserSearch(c *jira.Client, opts *jira.UserSearchOptions) ([]*jira.User, error) {
 	var (
 		users []*jira.User
 		err   error
 	)
 
-	it := viper.GetString("installation")
-
-	if it == jira.InstallationTypeLocal {
+	if c.InstallationType() == jira.InstallationTypeLocal {
 		users, err = c.UserSearchV2(opts)
 	} else {
 		users, err = c.UserSearch(opts)
@@ -148,16 +141,13 @@ func ProxyUserSearch(c *jira.Client, opts *jira.UserSearchOptions) ([]*jira.User
 
 // ProxyTransitions uses either v2 or v3 version of the GET /issue/{key}/transitions
 // endpoint to fetch valid transitions for an issue.
-// Defaults to v3 if installation type is not defined in the config.
 func ProxyTransitions(c *jira.Client, key string) ([]*jira.Transition, error) {
 	var (
 		transitions []*jira.Transition
 		err         error
 	)
 
-	it := viper.GetString("installation")
-
-	if it == jira.InstallationTypeLocal {
+	if c.InstallationType() == jira.InstallationTypeLocal {
 		transitions, err = c.TransitionsV2(key)
 	} else {
 		transitions, err = c.Transitions(key)
@@ -167,10 +157,9 @@ func ProxyTransitions(c *jira.Client, key string) ([]*jira.Transition, error) {
 }
 
 // ProxyWatchIssue uses either a v2 or v3 version of the PUT /issue/{key}/watchers
-// endpoint to assign an issue to the user. Defaults to v3 if installation type is
-// not defined in the config.
+// endpoint to assign an issue to the user.
 func ProxyWatchIssue(c *jira.Client, key string, user *jira.User) error {
-	it := viper.GetString("installation")
+	it := c.InstallationType()
 
 	var assignee string
 
