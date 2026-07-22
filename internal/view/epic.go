@@ -5,7 +5,6 @@ import (
 
 	"github.com/ankitpokhrel/jira-cli/api"
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
-	"github.com/ankitpokhrel/jira-cli/pkg/jira/filter/issue"
 	"github.com/ankitpokhrel/jira-cli/pkg/tui"
 )
 
@@ -43,7 +42,7 @@ func (el *EpicList) Render() error {
 				dataFn := func() any {
 					data := d.(tui.TableData)
 					ci := data.GetIndex(fieldKey)
-					iss, _ := api.ProxyGetIssue(api.DefaultClient(false), data.Get(r, ci), issue.NewNumCommentsFilter(1))
+					iss, _ := api.ProxyGetIssue(api.DefaultClient(false), data.Get(r, ci), jira.NewNumCommentsFilter(1))
 					return iss
 				}
 				renderFn := func(i any) (string, error) {

@@ -10,7 +10,6 @@ import (
 
 	"github.com/ankitpokhrel/jira-cli/api"
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
-	"github.com/ankitpokhrel/jira-cli/pkg/jira/filter/issue"
 	"github.com/ankitpokhrel/jira-cli/pkg/tui"
 	"github.com/rivo/tview"
 )
@@ -54,7 +53,7 @@ func (sl *SprintList) Render() error {
 				dataFn := func() interface{} {
 					data := d.(tui.TableData)
 					ci := data.GetIndex(fieldKey)
-					iss, _ := api.ProxyGetIssue(api.DefaultClient(false), data.Get(r, ci), issue.NewNumCommentsFilter(1))
+					iss, _ := api.ProxyGetIssue(api.DefaultClient(false), data.Get(r, ci), jira.NewNumCommentsFilter(1))
 					return iss
 				}
 				renderFn := func(i interface{}) (string, error) {

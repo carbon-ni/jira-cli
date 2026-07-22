@@ -10,7 +10,6 @@ import (
 	"github.com/ankitpokhrel/jira-cli/internal/cmdutil"
 	tuiView "github.com/ankitpokhrel/jira-cli/internal/view"
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
-	"github.com/ankitpokhrel/jira-cli/pkg/jira/filter/issue"
 )
 
 const (
@@ -104,7 +103,7 @@ func viewPretty(cmd *cobra.Command, args []string) {
 		defer s.Stop()
 
 		client := api.DefaultClient(debug)
-		return api.ProxyGetIssue(client, key, issue.NewNumCommentsFilter(comments))
+		return api.ProxyGetIssue(client, key, jira.NewNumCommentsFilter(comments))
 	}()
 	cmdutil.ExitIfError(err)
 

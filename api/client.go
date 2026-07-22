@@ -11,7 +11,6 @@ import (
 	"github.com/zalando/go-keyring"
 
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
-	"github.com/ankitpokhrel/jira-cli/pkg/jira/filter"
 	"github.com/ankitpokhrel/jira-cli/pkg/netrc"
 )
 
@@ -192,7 +191,7 @@ func ProxyGetIssueRaw(c *jira.Client, key string) (string, error) {
 // ProxyGetIssue uses either a v2 or v3 version of the Jira GET /issue/{key}
 // endpoint to fetch the issue details based on configured installation type.
 // Defaults to v3 if installation type is not defined in the config.
-func ProxyGetIssue(c *jira.Client, key string, opts ...filter.Filter) (*jira.Issue, error) {
+func ProxyGetIssue(c *jira.Client, key string, opts ...jira.Filter) (*jira.Issue, error) {
 	var (
 		iss *jira.Issue
 		err error

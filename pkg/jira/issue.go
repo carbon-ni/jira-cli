@@ -8,10 +8,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/ankitpokhrel/jira-cli/pkg/jira/filter/issue"
-
 	"github.com/ankitpokhrel/jira-cli/pkg/adf"
-	"github.com/ankitpokhrel/jira-cli/pkg/jira/filter"
 	"github.com/ankitpokhrel/jira-cli/pkg/md"
 )
 
@@ -27,7 +24,7 @@ const (
 )
 
 // GetIssue fetches issue details using GET /issue/{key} endpoint.
-func (c *Client) GetIssue(key string, opts ...filter.Filter) (*Issue, error) {
+func (c *Client) GetIssue(key string, opts ...Filter) (*Issue, error) {
 	iss, err := c.getIssue(key, apiVersion3)
 	if err != nil {
 		return nil, err
@@ -36,7 +33,7 @@ func (c *Client) GetIssue(key string, opts ...filter.Filter) (*Issue, error) {
 	iss.Fields.Description = ifaceToADF(iss.Fields.Description)
 
 	total := iss.Fields.Comment.Total
-	limit := filter.Collection(opts).GetInt(issue.KeyIssueNumComments)
+	limit := FilterCollection(opts).GetInt(KeyIssueNumComments)
 	if limit > total {
 		limit = total
 	}
@@ -48,7 +45,7 @@ func (c *Client) GetIssue(key string, opts ...filter.Filter) (*Issue, error) {
 }
 
 // GetIssueV2 fetches issue details using v2 version of Jira GET /issue/{key} endpoint.
-func (c *Client) GetIssueV2(key string, _ ...filter.Filter) (*Issue, error) {
+func (c *Client) GetIssueV2(key string, _ ...Filter) (*Issue, error) {
 	return c.getIssue(key, apiVersion2)
 }
 

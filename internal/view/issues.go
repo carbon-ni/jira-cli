@@ -9,7 +9,6 @@ import (
 
 	"github.com/ankitpokhrel/jira-cli/api"
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
-	"github.com/ankitpokhrel/jira-cli/pkg/jira/filter/issue"
 	"github.com/ankitpokhrel/jira-cli/pkg/tui"
 )
 
@@ -73,7 +72,7 @@ func (l *IssueList) Render() error {
 		tui.WithViewModeFunc(func(r, c int, _ any) (func() any, func(any) (string, error)) {
 			dataFn := func() any {
 				ci := data.GetIndex(fieldKey)
-				iss, _ := api.ProxyGetIssue(api.DefaultClient(false), data.Get(r, ci), issue.NewNumCommentsFilter(l.Display.Comments))
+				iss, _ := api.ProxyGetIssue(api.DefaultClient(false), data.Get(r, ci), jira.NewNumCommentsFilter(l.Display.Comments))
 				return iss
 			}
 			renderFn := func(i any) (string, error) {
