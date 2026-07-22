@@ -11,6 +11,7 @@ import (
 	"github.com/ankitpokhrel/jira-cli/api"
 	"github.com/ankitpokhrel/jira-cli/internal/cmdutil"
 	"github.com/ankitpokhrel/jira-cli/internal/query"
+	"github.com/ankitpokhrel/jira-cli/pkg/jira"
 )
 
 const (
@@ -56,7 +57,7 @@ func add(cmd *cobra.Command, args []string) {
 		if len(params.issues) == 0 {
 			issues := strings.Split(ans.Issues, ",")
 			for i, iss := range issues {
-				issues[i] = cmdutil.GetJiraIssueKey(project, strings.TrimSpace(iss))
+				issues[i] = jira.GetIssueKey(project, strings.TrimSpace(iss))
 			}
 			params.issues = issues
 		}
@@ -87,7 +88,7 @@ func parseFlags(flags query.FlagParser, args []string, project string) *addParam
 		tickets := args[1:]
 		issues = make([]string, 0, len(tickets))
 		for _, iss := range tickets {
-			issues = append(issues, cmdutil.GetJiraIssueKey(project, iss))
+			issues = append(issues, jira.GetIssueKey(project, iss))
 		}
 	}
 

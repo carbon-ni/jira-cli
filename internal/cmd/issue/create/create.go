@@ -132,7 +132,7 @@ func create(cmd *cobra.Command, _ []string) {
 			cr.WithCustomFields(configuredCustomFields)
 		}
 
-		if handle := cmdutil.GetSubtaskHandle(params.IssueType, cc.issueTypes); handle != "" {
+		if handle := jira.GetSubtaskHandle(params.IssueType, cc.issueTypes); handle != "" {
 			cr.SubtaskField = handle
 		}
 
@@ -249,9 +249,9 @@ func (cc *createCmd) askQuestions() error {
 	project := viper.GetString("project.key")
 
 	if cc.params.ParentIssueKey == "" {
-		cc.params.ParentIssueKey = cmdutil.GetJiraIssueKey(project, ans.ParentIssueKey)
+		cc.params.ParentIssueKey = jira.GetIssueKey(project, ans.ParentIssueKey)
 	} else {
-		cc.params.ParentIssueKey = cmdutil.GetJiraIssueKey(project, cc.params.ParentIssueKey)
+		cc.params.ParentIssueKey = jira.GetIssueKey(project, cc.params.ParentIssueKey)
 	}
 
 	if cc.params.Summary == "" {

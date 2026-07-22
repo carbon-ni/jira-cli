@@ -129,7 +129,7 @@ func parseArgsAndFlags(flags query.FlagParser, args []string, project string) *a
 
 	nargs := len(args)
 	if nargs >= 1 {
-		key = cmdutil.GetJiraIssueKey(project, args[0])
+		key = jira.GetIssueKey(project, args[0])
 	}
 	if nargs >= 2 {
 		user = args[1]
@@ -166,7 +166,7 @@ func (ac *assignCmd) setIssueKey(project string) error {
 	if err := survey.Ask([]*survey.Question{qs}, &ans); err != nil {
 		return err
 	}
-	ac.params.key = cmdutil.GetJiraIssueKey(project, ans)
+	ac.params.key = jira.GetIssueKey(project, ans)
 
 	return nil
 }

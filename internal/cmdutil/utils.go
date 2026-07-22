@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -144,60 +142,6 @@ func ReadFile(filePath string) ([]byte, error) {
 		return b, err
 	}
 	return []byte(""), nil
-}
-
-// GetJiraIssueKey constructs actual issue key based on given key.
-func GetJiraIssueKey(project, key string) string {
-	if project == "" {
-		return key
-	}
-	if _, err := strconv.Atoi(key); err != nil {
-		return strings.ToUpper(key)
-	}
-	return fmt.Sprintf("%s-%s", project, key)
-}
-
-// NormalizeJiraError normalizes error message we receive from jira.
-func NormalizeJiraError(msg string) string {
-	msg = strings.TrimSpace(strings.Replace(msg, "Error:\n", "", 1))
-	msg = strings.Replace(msg, "- ", "", 1)
-
-	return msg
-}
-
-// GetSubtaskHandle fetches actual subtask handle.
-// This value can either be handle or name based
-// on the used jira version.
-func GetSubtaskHandle(issueType string, issueTypes []*jira.IssueType) string {
-	get := func(it *jira.IssueType) string {
-		if it.Handle != "" {
-			return it.Handle
-		}
-		return it.Name
-	}
-
-	var fallback string
-
-	for _, it := range issueTypes {
-		if it.Subtask {
-			// Exact matches return immediately.
-			if strings.EqualFold(issueType, it.Name) {
-				return get(it)
-			}
-
-			// Store the first subtask type as backup.
-			if fallback == "" {
-				fallback = get(it)
-			}
-		}
-	}
-
-	// Set default for fallback if none found
-	if strings.EqualFold(issueType, jira.IssueTypeSubTask) && fallback == "" {
-		fallback = jira.IssueTypeSubTask
-	}
-
-	return fallback
 }
 
 // GetTUIStyleConfig returns the custom style configured by the user.

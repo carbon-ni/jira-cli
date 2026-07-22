@@ -71,7 +71,7 @@ func viewRaw(cmd *cobra.Command, args []string) {
 	debug, err := cmd.Flags().GetBool(flagDebug)
 	cmdutil.ExitIfError(err)
 
-	key := cmdutil.GetJiraIssueKey(viper.GetString(configProject), args[0])
+	key := jira.GetIssueKey(viper.GetString(configProject), args[0])
 
 	apiResp, err := func() (string, error) {
 		s := cmdutil.Info(messageFetchingData)
@@ -98,7 +98,7 @@ func viewPretty(cmd *cobra.Command, args []string) {
 		comments = max(numComments, 1)
 	}
 
-	key := cmdutil.GetJiraIssueKey(viper.GetString(configProject), args[0])
+	key := jira.GetIssueKey(viper.GetString(configProject), args[0])
 	iss, err := func() (*jira.Issue, error) {
 		s := cmdutil.Info(messageFetchingData)
 		defer s.Stop()

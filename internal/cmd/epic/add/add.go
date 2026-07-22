@@ -52,13 +52,13 @@ func add(cmd *cobra.Command, args []string) {
 		cmdutil.ExitIfError(err)
 
 		if params.epicKey == "" {
-			params.epicKey = cmdutil.GetJiraIssueKey(project, ans.EpicKey)
+			params.epicKey = jira.GetIssueKey(project, ans.EpicKey)
 		}
 
 		if len(params.issues) == 0 {
 			issues := strings.Split(ans.Issues, ",")
 			for i, iss := range issues {
-				issues[i] = cmdutil.GetJiraIssueKey(project, strings.TrimSpace(iss))
+				issues[i] = jira.GetIssueKey(project, strings.TrimSpace(iss))
 			}
 			params.issues = issues
 		}
@@ -82,7 +82,7 @@ func add(cmd *cobra.Command, args []string) {
 		// in a loop. We will print failed requests with exit code 1 at the end if there are any.
 		for _, iss := range params.issues {
 			if err := client.Edit(iss, &jira.EditRequest{ParentIssueKey: params.epicKey, SkipNotify: true}); err != nil {
-				msg := fmt.Sprintf("\n  - %s: %s", iss, cmdutil.NormalizeJiraError(err.Error()))
+				msg := fmt.Sprintf("\n  - %s: %s", iss, jira.NormalizeJiraError(err.Error()))
 				failed.WriteString(msg)
 			} else {
 				// We will show success message if at-least one request reports success.
@@ -117,13 +117,13 @@ func parseFlags(flags query.FlagParser, args []string, project string) *addParam
 
 	nArgs := len(args)
 	if nArgs > 0 {
-		epicKey = cmdutil.GetJiraIssueKey(project, args[0])
+		epicKey = jira.GetIssueKey(project, args[0])
 	}
 	if nArgs > 1 {
 		tickets := args[1:]
 		issues = make([]string, 0, len(tickets))
 		for _, iss := range tickets {
-			issues = append(issues, cmdutil.GetJiraIssueKey(project, iss))
+			issues = append(issues, jira.GetIssueKey(project, iss))
 		}
 	}
 

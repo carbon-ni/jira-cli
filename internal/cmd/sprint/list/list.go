@@ -157,8 +157,8 @@ func singleSprintView(sprintQuery *query.Sprint, flags query.FlagParser, boardID
 			ft = fmt.Sprintf(
 				"Showing %d results for project %q in sprint #%d ➤ %s (%s - %s)",
 				len(issues), project, sprint.ID, sprint.Name,
-				cmdutil.FormatDateTimeHuman(sprint.StartDate, time.RFC3339),
-				cmdutil.FormatDateTimeHuman(sprint.EndDate, time.RFC3339),
+				view.FormatDateTimeHuman(sprint.StartDate, time.RFC3339),
+				view.FormatDateTimeHuman(sprint.EndDate, time.RFC3339),
 			)
 		}
 	} else {

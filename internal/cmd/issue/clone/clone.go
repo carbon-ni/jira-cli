@@ -57,7 +57,7 @@ func clone(cmd *cobra.Command, args []string) {
 		params: params,
 	}
 
-	key := cmdutil.GetJiraIssueKey(project, args[0])
+	key := jira.GetIssueKey(project, args[0])
 	issue, err := func() (*jira.Issue, error) {
 		s := cmdutil.Info("Fetching issue details...")
 		defer s.Stop()
@@ -161,7 +161,7 @@ func (cc *cloneCmd) getActualCreateParams(project string, issue *jira.Issue) *cr
 	cp := createParams{}
 
 	if cc.params.parent != "" {
-		cp.parent = cmdutil.GetJiraIssueKey(project, cc.params.parent)
+		cp.parent = jira.GetIssueKey(project, cc.params.parent)
 	} else if issue.Fields.Parent != nil {
 		cp.parent = issue.Fields.Parent.Key
 	}

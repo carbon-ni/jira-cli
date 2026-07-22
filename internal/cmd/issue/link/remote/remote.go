@@ -80,7 +80,7 @@ func parseArgsAndFlags(flags query.FlagParser, args []string, project string) *l
 	var issueKey, url, title string
 	nargs := len(args)
 	if nargs >= 1 {
-		issueKey = cmdutil.GetJiraIssueKey(project, args[0])
+		issueKey = jira.GetIssueKey(project, args[0])
 	}
 	if nargs >= 2 {
 		url = args[1]
@@ -120,7 +120,7 @@ func (lc *linkCmd) setIssueKey(project string) error {
 	if err := survey.Ask([]*survey.Question{qs}, &ans); err != nil {
 		return err
 	}
-	lc.params.issueKey = cmdutil.GetJiraIssueKey(project, ans)
+	lc.params.issueKey = jira.GetIssueKey(project, ans)
 
 	return nil
 }

@@ -95,7 +95,7 @@ func loadList(cmd *cobra.Command, args []string) {
 	pk, err := cmd.Flags().GetString("parent")
 	cmdutil.ExitIfError(err)
 
-	err = cmd.Flags().Set("parent", cmdutil.GetJiraIssueKey(project, pk))
+	err = cmd.Flags().Set("parent", jira.GetIssueKey(project, pk))
 	cmdutil.ExitIfError(err)
 
 	if len(args) > 0 {

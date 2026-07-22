@@ -83,7 +83,7 @@ func epicList(cmd *cobra.Command, args []string) {
 	if len(args) == 0 {
 		epicExplorerView(cmd, cmd.Flags(), project, projectType, server, client, format)
 	} else {
-		key := cmdutil.GetJiraIssueKey(project, args[0])
+		key := jira.GetIssueKey(project, args[0])
 		singleEpicView(cmd.Flags(), key, project, projectType, server, client, format)
 	}
 }

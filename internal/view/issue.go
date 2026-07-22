@@ -228,10 +228,10 @@ func (i Issue) header() string {
 	}
 	return fmt.Sprintf(
 		"%s %s  %s %s  ⌛ %s  👷 %s  🔑️ %s  💭 %d comments  \U0001F9F5 %d linked\n# %s\n⏱️  %s  🔎 %s  🚀 %s  📦 %s  🏷️  %s  👀 %s",
-		iti, it, sti, st, cmdutil.FormatDateTimeHuman(i.Data.Fields.Updated, jira.RFC3339), as, i.Data.Key,
+		iti, it, sti, st, FormatDateTimeHuman(i.Data.Fields.Updated, jira.RFC3339), as, i.Data.Key,
 		i.Data.Fields.Comment.Total, len(i.Data.Fields.IssueLinks),
 		i.Data.Fields.Summary,
-		cmdutil.FormatDateTimeHuman(i.Data.Fields.Created, jira.RFC3339), i.Data.Fields.Reporter.Name,
+		FormatDateTimeHuman(i.Data.Fields.Created, jira.RFC3339), i.Data.Fields.Reporter.Name,
 		i.Data.Fields.Priority.Name, cmpt, lbl, wch,
 	)
 }
@@ -390,7 +390,7 @@ func (i Issue) comments() []issueComment {
 		meta := fmt.Sprintf(
 			"\n %s • %s",
 			coloredOut(authorName(), color.FgWhite, color.Bold),
-			coloredOut(cmdutil.FormatDateTimeHuman(c.Created, jira.RFC3339), color.FgWhite, color.Bold),
+			coloredOut(FormatDateTimeHuman(c.Created, jira.RFC3339), color.FgWhite, color.Bold),
 		)
 		if idx == total-1 {
 			meta += fmt.Sprintf(" • %s", coloredOut("Latest comment", color.FgCyan, color.Bold))

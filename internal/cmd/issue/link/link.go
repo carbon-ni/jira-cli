@@ -102,10 +102,10 @@ func parseArgsAndFlags(flags query.FlagParser, args []string, project string) *l
 
 	nargs := len(args)
 	if nargs >= 1 {
-		inwardIssueKey = cmdutil.GetJiraIssueKey(project, args[0])
+		inwardIssueKey = jira.GetIssueKey(project, args[0])
 	}
 	if nargs >= 2 {
-		outwardIssueKey = cmdutil.GetJiraIssueKey(project, args[1])
+		outwardIssueKey = jira.GetIssueKey(project, args[1])
 	}
 	if nargs >= 3 {
 		linkType = args[2]
@@ -143,7 +143,7 @@ func (lc *linkCmd) setInwardIssueKey(project string) error {
 	if err := survey.Ask([]*survey.Question{qs}, &ans); err != nil {
 		return err
 	}
-	lc.params.inwardIssueKey = cmdutil.GetJiraIssueKey(project, ans)
+	lc.params.inwardIssueKey = jira.GetIssueKey(project, ans)
 
 	return nil
 }
@@ -163,7 +163,7 @@ func (lc *linkCmd) setOutwardIssueKey(project string) error {
 	if err := survey.Ask([]*survey.Question{qs}, &ans); err != nil {
 		return err
 	}
-	lc.params.outwardIssueKey = cmdutil.GetJiraIssueKey(project, ans)
+	lc.params.outwardIssueKey = jira.GetIssueKey(project, ans)
 
 	return nil
 }

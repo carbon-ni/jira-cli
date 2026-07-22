@@ -30,42 +30,83 @@ func Client(config jira.Config) *jira.Client {
 		return jiraClient
 	}
 
+	resolveServerAndLogin(&config)
+	resolveAPIToken(&config)
+	resolveCookies(&config)
+	resolveAuthType(&config)
+	resolveInsecure(&config)
+	resolveMTLS(&config)
+
+	jiraClient = jira.NewClient(
+		config,
+		jira.WithTimeout(clientTimeout),
+		jira.WithInsecureTLS(*config.Insecure),
+	)
+
+	return jiraClient
+}
+
+func resolveServerAndLogin(config *jira.Config) {
 	if config.Server == "" {
 		config.Server = viper.GetString("server")
 	}
 	if config.Login == "" {
 		config.Login = viper.GetString("login")
 	}
-	if config.APIToken == "" {
-		config.APIToken = viper.GetString("api_token")
-	}
-	if config.APIToken == "" {
-		netrcConfig, _ := netrc.Read(config.Server, config.Login)
-		if netrcConfig != nil {
-			config.APIToken = netrcConfig.Password
-		}
-	}
-	if config.APIToken == "" {
-		secret, _ := keyring.Get("jira-cli", config.Login)
-		config.APIToken = secret
-	}
-	if config.Cookies == "" {
-		config.Cookies = viper.GetString("cookies")
-	}
-	if config.Cookies == "" {
-		config.Cookies = readCookieFile()
-	}
-	if config.AuthType == nil {
-		authType := jira.AuthType(viper.GetString("auth_type"))
-		config.AuthType = &authType
-	}
-	if config.Insecure == nil {
-		insecure := viper.GetBool("insecure")
-		config.Insecure = &insecure
+}
+
+func resolveAPIToken(config *jira.Config) {
+	if config.APIToken != "" {
+		return
 	}
 
-	// MTLS
+	config.APIToken = viper.GetString("api_token")
+	if config.APIToken != "" {
+		return
+	}
 
+	netrcConfig, _ := netrc.Read(config.Server, config.Login)
+	if netrcConfig != nil {
+		config.APIToken = netrcConfig.Password
+		return
+	}
+
+	secret, _ := keyring.Get("jira-cli", config.Login)
+	config.APIToken = secret
+}
+
+func resolveCookies(config *jira.Config) {
+	if config.Cookies != "" {
+		return
+	}
+
+	config.Cookies = viper.GetString("cookies")
+	if config.Cookies != "" {
+		return
+	}
+
+	config.Cookies = readCookieFile()
+}
+
+func resolveAuthType(config *jira.Config) {
+	if config.AuthType != nil {
+		return
+	}
+
+	authType := jira.AuthType(viper.GetString("auth_type"))
+	config.AuthType = &authType
+}
+
+func resolveInsecure(config *jira.Config) {
+	if config.Insecure != nil {
+		return
+	}
+
+	insecure := viper.GetBool("insecure")
+	config.Insecure = &insecure
+}
+
+func resolveMTLS(config *jira.Config) {
 	if config.MTLSConfig.CaCert == "" {
 		config.MTLSConfig.CaCert = viper.GetString("mtls.ca_cert")
 	}
@@ -75,14 +116,6 @@ func Client(config jira.Config) *jira.Client {
 	if config.MTLSConfig.ClientKey == "" {
 		config.MTLSConfig.ClientKey = viper.GetString("mtls.client_key")
 	}
-
-	jiraClient = jira.NewClient(
-		config,
-		jira.WithTimeout(clientTimeout),
-		jira.WithInsecureTLS(*config.Insecure),
-	)
-
-	return jiraClient
 }
 
 // ResetClient clears the cached jira client. It is intended for tests that

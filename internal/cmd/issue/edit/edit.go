@@ -142,7 +142,7 @@ func edit(cmd *cobra.Command, args []string) {
 			body = md.ToJiraMD(body)
 		}
 
-		parent := cmdutil.GetJiraIssueKey(project, params.parentIssueKey)
+		parent := jira.GetIssueKey(project, params.parentIssueKey)
 		if parent == "" && issue.Fields.Parent != nil {
 			parent = issue.Fields.Parent.Key
 		}
@@ -358,7 +358,7 @@ func parseArgsAndFlags(flags query.FlagParser, args []string, project string) *e
 	cmdutil.ExitIfError(err)
 
 	return &editParams{
-		issueKey:        cmdutil.GetJiraIssueKey(project, args[0]),
+		issueKey:        jira.GetIssueKey(project, args[0]),
 		parentIssueKey:  parentIssueKey,
 		summary:         summary,
 		body:            body,

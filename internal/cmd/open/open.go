@@ -8,6 +8,7 @@ import (
 
 	"github.com/ankitpokhrel/jira-cli/internal/cmdutil"
 	"github.com/ankitpokhrel/jira-cli/pkg/browser"
+	"github.com/ankitpokhrel/jira-cli/pkg/jira"
 )
 
 const (
@@ -45,7 +46,7 @@ func open(cmd *cobra.Command, args []string) {
 	if len(args) == 0 {
 		url = cmdutil.GenerateServerBrowseURL(server, project)
 	} else {
-		url = cmdutil.GenerateServerBrowseURL(server, cmdutil.GetJiraIssueKey(project, args[0]))
+		url = cmdutil.GenerateServerBrowseURL(server, jira.GetIssueKey(project, args[0]))
 	}
 
 	fmt.Println(url)
