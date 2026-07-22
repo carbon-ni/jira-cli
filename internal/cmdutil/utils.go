@@ -94,14 +94,14 @@ func Navigate(server, path string) error {
 	return browser.Browse(url)
 }
 
-// GenerateServerBrowseURL will return the `browse` URL for a given key.
-// The server section can be overridden via `browse_server` in config.
-// This is useful if your API endpoint is separate from the web client endpoint.
+// GenerateServerBrowseURL returns the browse URL for a given key.
+// The server can be overridden via `browse_server` config when the API
+// endpoint differs from the web client endpoint.
 func GenerateServerBrowseURL(server, key string) string {
-	if viper.GetString("browse_server") != "" {
-		server = viper.GetString("browse_server")
+	if override := viper.GetString("browse_server"); override != "" {
+		server = override
 	}
-	return fmt.Sprintf("%s/browse/%s", server, key)
+	return jira.BrowseURL(server, key)
 }
 
 // FormatDateTimeHuman formats date time in human readable format.
