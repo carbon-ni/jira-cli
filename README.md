@@ -1,5 +1,5 @@
 <div align="center">
-    <h1 align="center">JiraCLI</h1>
+    <h1 align="center">Jira CLI</h1>
 </div>
 
 <div>
@@ -11,7 +11,6 @@
     <p align="center">
         <i>Jira for AI agents</i>
     </p>
-    <img align="center" alt="JiraCLI Demo" src=".github/assets/demo.gif" /><br/><br/>
 </div>
 
 JiraCLI is an interactive command line tool for Atlassian Jira that will help you avoid Jira UI to some extent. This
@@ -25,7 +24,7 @@ necessary features like issue creation, cloning, linking, ticket transition, and
 ## Vision: a Jira for AI agents
 
 This is a fork of [jira-cli](https://github.com/ankitpokhrel/jira-cli) with a different goal. The original is a
-human-first interactive CLI. This project is becoming a **Jira for AI agents** — an agent-facing interface to Jira,
+human-first interactive CLI. This project is aiming to be a **Jira for AI agents** — an agent-facing interface to Jira,
 not a standard CLI.
 
 That means:
