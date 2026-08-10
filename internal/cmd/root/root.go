@@ -76,8 +76,8 @@ func init() {
 func NewCmdRoot() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "jira <command> <subcommand>",
-		Short: "Interactive Jira CLI",
-		Long:  "Interactive Jira command line.",
+		Short: "Agent-first Jira CLI",
+		Long:  "Agent-first Jira command line. Machine-readable TOON output by default; interactive TUI for humans.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cmd.Help()
 		},

@@ -1,6 +1,6 @@
 # jira-cli
 
-Interactive Jira CLI in Go. `cobra`/`viper` for CLI, `tview`/`tcell` for TUI, `toon-go` for structured agent-facing output.
+Agent-first Jira CLI in Go (a Jira for AI agents). `cobra`/`viper` for CLI, `tview`/`tcell` for TUI, `toon-go` for structured agent-facing output.
 
 ## Module routing
 

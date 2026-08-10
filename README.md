@@ -9,7 +9,7 @@
         </a>
     </p>
     <p align="center">
-        <i>Feature-rich Interactive Jira Command Line</i>
+        <i>Jira for AI agents</i>
     </p>
     <img align="center" alt="JiraCLI Demo" src=".github/assets/demo.gif" /><br/><br/>
 </div>
@@ -21,6 +21,23 @@ The tool started with the idea of making issue search and navigation as straight
 necessary features like issue creation, cloning, linking, ticket transition, and much more.
 
 > This tool is heavily inspired by the [GitHub CLI](https://github.com/cli/cli)
+
+## Vision: a Jira for AI agents
+
+This is a fork of [jira-cli](https://github.com/ankitpokhrel/jira-cli) with a different goal. The original is a
+human-first interactive CLI. This project is becoming a **Jira for AI agents** — an agent-facing interface to Jira,
+not a standard CLI.
+
+That means:
+
+- **Machine-readable by default.** Read commands emit deterministic structured output in
+  [TOON](https://github.com/toon-format/toon-go), designed for machines to parse. JSON is available for compatibility.
+- **Drivable, not clickable.** Commands are meant to be called, chained, and replayed by agents and scripts, not
+  navigated with arrow keys.
+- **The TUI is a bonus.** The interactive view stays for humans who want it, but it is never required to get work done.
+
+> [!NOTE]
+> Divergence from upstream is intentional. Anything that only makes sense for a human-first CLI will be reworked or dropped.
 
 ## Supported platforms
 > [!NOTE]
@@ -673,9 +690,17 @@ jira board list
 ```
 </details>
 
-## Scripts
-Often times, you may want to use the output of the command to do something cool. However, the default interactive UI might not allow you to do that.
-The tool comes with the `--plain` flag that displays results in a simple layout that can then be manipulated from the shell script.
+## Scripts and agents
+The default output is [TOON](https://github.com/toon-format/toon-go) — deterministic, structured stdout meant for
+machines, not tables for eyeballs. Read commands default to it, so an agent or a script can pipe, parse, or replay
+any command without flag gymnastics:
+
+```sh
+jira issue list --created month
+```
+
+For classic shell scripting, the `--plain` flag displays results in a simple layout that can then be manipulated from
+the shell script.
 
 Some example scripts are listed below.
 
