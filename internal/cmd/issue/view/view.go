@@ -107,6 +107,11 @@ func viewPretty(cmd *cobra.Command, args []string) {
 	}()
 	cmdutil.ExitIfError(err)
 
+	if format := cmdutil.OutputFormat(cmd); cmdutil.IsStructured(format) {
+		renderStructured(iss, format)
+		return
+	}
+
 	plain, err := cmd.Flags().GetBool(flagPlain)
 	cmdutil.ExitIfError(err)
 

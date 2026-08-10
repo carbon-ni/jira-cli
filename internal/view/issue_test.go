@@ -310,3 +310,63 @@ func TestSeparator(t *testing.T) {
 		})
 	}
 }
+
+func TestIssueDetailsRenderAttachmentsInPlainView(t *testing.T) {
+	t.Parallel()
+
+	var b bytes.Buffer
+
+	data := &jira.Issue{
+		Key: "TEST-1",
+		Fields: jira.IssueFields{
+			Summary:   "Has a design",
+			IssueType: jira.IssueType{Name: "Task"},
+			Status: struct {
+				Name string `json:"name"`
+			}{Name: "Open"},
+			Attachments: []jira.Attachment{
+				{ID: "87891", Filename: "design.png", MimeType: "image/png", Size: 35748},
+				{ID: "87892", Filename: "notes.md", MimeType: "text/markdown", Size: 2048},
+			},
+		},
+	}
+
+	issue := Issue{
+		Server:  "https://test.local",
+		Data:    data,
+		Display: DisplayFormat{Plain: true},
+	}
+	assert.NoError(t, issue.renderPlain(&b))
+
+	out := b.String()
+	assert.Contains(t, out, "ATTACHMENTS")
+	assert.Contains(t, out, "design.png • 34.9 KB • image/png")
+	assert.Contains(t, out, "2.0 KB")
+	assert.Contains(t, out, "text/markdown")
+}
+
+func TestIssueDetailsWithNoAttachmentsSkipsSection(t *testing.T) {
+	t.Parallel()
+
+	var b bytes.Buffer
+
+	data := &jira.Issue{
+		Key: "TEST-1",
+		Fields: jira.IssueFields{
+			Summary:   "No files",
+			IssueType: jira.IssueType{Name: "Task"},
+			Status: struct {
+				Name string `json:"name"`
+			}{Name: "Open"},
+		},
+	}
+
+	issue := Issue{
+		Server:  "https://test.local",
+		Data:    data,
+		Display: DisplayFormat{Plain: true},
+	}
+	assert.NoError(t, issue.renderPlain(&b))
+
+	assert.NotContains(t, b.String(), "ATTACHMENTS")
+}

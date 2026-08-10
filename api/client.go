@@ -1,6 +1,8 @@
 package api
 
 import (
+	"context"
+	"net/http"
 	"time"
 
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
@@ -31,6 +33,13 @@ func Client(config jira.Config) *jira.Client {
 // reconfigure viper/server between subtests; production code never needs it.
 func ResetClient() {
 	jiraClient = nil
+}
+
+// ProxyDownloadAttachment streams an attachment file from its content URL,
+// following redirects while preserving auth headers. The content URL comes
+// from the API response itself, so no V2/V3 routing is needed.
+func ProxyDownloadAttachment(c *jira.Client, att *jira.Attachment) (*http.Response, error) {
+	return c.GetAttachmentContent(context.Background(), att.Content)
 }
 
 // ProxyCreate uses either a v2 or v3 version of the Jira POST /issue

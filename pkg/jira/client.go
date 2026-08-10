@@ -306,7 +306,16 @@ func (c *Client) request(ctx context.Context, method, endpoint string, body []by
 		req.Header.Set(k, v)
 	}
 
-	// Set default auth type to `basic`.
+	c.applyAuth(req, method)
+
+	httpClient := &http.Client{Transport: c.transport}
+
+	return httpClient.Do(req.WithContext(ctx))
+}
+
+// applyAuth decorates the request with the configured authentication.
+// Empty auth type defaults to basic.
+func (c *Client) applyAuth(req *http.Request, method string) {
 	if c.authType == nil {
 		basic := AuthTypeBasic
 		c.authType = &basic
@@ -326,10 +335,6 @@ func (c *Client) request(ctx context.Context, method, endpoint string, body []by
 	case string(AuthTypeBasic):
 		req.SetBasicAuth(c.login, c.token)
 	}
-
-	httpClient := &http.Client{Transport: c.transport}
-
-	return httpClient.Do(req.WithContext(ctx))
 }
 
 func (c *Client) setCookieAuth(req *http.Request, method string) {

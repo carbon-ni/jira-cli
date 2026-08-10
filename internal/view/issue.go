@@ -97,6 +97,11 @@ func (i Issue) String() string {
 	if desc != "" {
 		fmt.Fprintf(&s, "\n\n%s\n\n%s", i.separator("Description"), desc)
 	}
+	if len(i.Data.Fields.Attachments) > 0 {
+		fmt.Fprintf(&s, "\n\n%s\n\n%s\n",
+			i.separator(fmt.Sprintf("%d Attachments", len(i.Data.Fields.Attachments))),
+			i.attachments())
+	}
 	if len(i.Data.Fields.Subtasks) > 0 {
 		fmt.Fprintf(&s, "\n\n%s\n\n%s\n",
 			i.separator(fmt.Sprintf("%d Subtasks", len(i.Data.Fields.Subtasks))),
@@ -131,6 +136,17 @@ func (i Issue) fragments() []fragment {
 			fragment{Body: i.separator("Description")},
 			newBlankFragment(2),
 			fragment{Body: desc, Parse: true},
+		)
+	}
+
+	if len(i.Data.Fields.Attachments) > 0 {
+		scraps = append(
+			scraps,
+			newBlankFragment(1),
+			fragment{Body: i.separator(fmt.Sprintf("%d Attachments", len(i.Data.Fields.Attachments)))},
+			newBlankFragment(2),
+			fragment{Body: i.attachments()},
+			newBlankFragment(1),
 		)
 	}
 
@@ -251,6 +267,31 @@ func (i Issue) description() string {
 	}
 
 	return desc
+}
+
+func (i Issue) attachments() string {
+	if len(i.Data.Fields.Attachments) == 0 {
+		return ""
+	}
+
+	var (
+		attachments strings.Builder
+		maxNameLen  int
+	)
+
+	for _, att := range i.Data.Fields.Attachments {
+		maxNameLen = max(len(att.Filename), maxNameLen)
+	}
+
+	fmt.Fprintf(&attachments, "\n %s\n\n", coloredOut("ATTACHMENTS", color.FgWhite, color.Bold))
+	for _, att := range i.Data.Fields.Attachments {
+		fmt.Fprintf(&attachments, "  %s • %s • %s\n",
+			pad(att.Filename, maxNameLen),
+			cmdutil.FormatBytesHuman(att.Size),
+			att.MimeType)
+	}
+
+	return attachments.String()
 }
 
 func (i Issue) subtasks() string {

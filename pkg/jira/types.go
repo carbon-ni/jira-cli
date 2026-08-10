@@ -67,6 +67,18 @@ type Issue struct {
 	Fields IssueFields `json:"fields"`
 }
 
+// Attachment holds metadata for a file attached to an issue.
+// Content is the API URL that streams the file (may redirect to a CDN).
+type Attachment struct {
+	ID       string `json:"id"`
+	Filename string `json:"filename"`
+	MimeType string `json:"mimeType"`
+	Size     int64  `json:"size"`
+	Content  string `json:"content"`
+	Created  string `json:"created"`
+	Author   User   `json:"author"`
+}
+
 // IssueFields holds issue fields.
 type IssueFields struct {
 	Summary     string      `json:"summary"`
@@ -113,8 +125,9 @@ type IssueFields struct {
 		} `json:"comments"`
 		Total int `json:"total"`
 	} `json:"comment"`
-	Subtasks   []Issue
-	IssueLinks []struct {
+	Subtasks    []Issue
+	Attachments []Attachment `json:"attachment"` // Jira field id is singular
+	IssueLinks  []struct {
 		ID       string `json:"id"`
 		LinkType struct {
 			Name    string `json:"name"`
