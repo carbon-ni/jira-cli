@@ -8,15 +8,8 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/ankitpokhrel/jira-cli/api"
-	"github.com/ankitpokhrel/jira-cli/internal/cmdutil"
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
-	"github.com/ankitpokhrel/jira-cli/pkg/tui"
-	"github.com/rivo/tview"
 )
-
-// SprintIssueFunc provides issues in the sprint.
-type SprintIssueFunc func(boardID, sprintID int) []*jira.Issue
 
 // SprintList is a list view for sprints.
 type SprintList struct {
@@ -24,138 +17,19 @@ type SprintList struct {
 	Board   string
 	Server  string
 	Data    []*jira.Sprint
-	Issues  SprintIssueFunc
 	Display DisplayFormat
 }
 
-// Render renders the sprint explorer view.
-//
-//nolint:dupl
+// Render renders the sprint list as a plain table.
 func (sl *SprintList) Render() error {
-	renderer, err := MDRenderer()
-	if err != nil {
-		return err
-	}
-
-	data := sl.data()
-	view := tui.NewPreview(
-		tui.WithPreviewFooterText(
-			fmt.Sprintf(
-				"Showing %d results from board %q of project %q",
-				len(sl.Data), sl.Board, sl.Project,
-			),
-		),
-		tui.WithInitialText(helpText),
-		tui.WithContentTableOpts(
-			tui.WithFixedColumns(sl.Display.FixedColumns),
-			tui.WithTableStyle(sl.Display.TableStyle),
-			tui.WithSelectedFunc(navigate(sl.Server)),
-			tui.WithViewModeFunc(func(r, c int, d interface{}) (func() interface{}, func(interface{}) (string, error)) {
-				dataFn := func() interface{} {
-					data := d.(tui.TableData)
-					ci := data.GetIndex(fieldKey)
-					iss, _ := api.ProxyGetIssue(cmdutil.NewJiraClient(false), data.Get(r, ci), jira.NewNumCommentsFilter(1))
-					return iss
-				}
-				renderFn := func(i interface{}) (string, error) {
-					iss := Issue{
-						Server:  sl.Server,
-						Data:    i.(*jira.Issue),
-						Options: IssueOption{NumComments: 1},
-					}
-					return iss.RenderedOut(renderer)
-				}
-				return dataFn, renderFn
-			}),
-			tui.WithCopyFunc(copyURL(sl.Server)),
-			tui.WithCopyKeyFunc(copyKey()),
-		),
-	)
-
-	return view.Paint(data)
+	w := tabwriter.NewWriter(os.Stdout, 0, tabWidth, 1, '\t', 0)
+	return sl.renderPlain(w)
 }
 
-// RenderInTable renders the list in table view.
-func (sl *SprintList) RenderInTable() error {
-	if sl.Display.Plain || tui.IsDumbTerminal() || tui.IsNotTTY() {
-		w := tabwriter.NewWriter(os.Stdout, 0, tabWidth, 1, '\t', 0)
-		return sl.renderPlain(w)
-	}
-
-	data := sl.tableData()
-	view := tui.NewTable(
-		tui.WithFixedColumns(sl.Display.FixedColumns),
-		tui.WithTableStyle(sl.Display.TableStyle),
-		tui.WithTableFooterText(
-			fmt.Sprintf(
-				"Showing %d results from board %q of project %q",
-				len(sl.Data), sl.Board, sl.Project,
-			),
-		),
-	)
-
-	return view.Paint(data)
-}
-
-// renderPlain renders the issue in plain view.
+// renderPlain renders the sprints in plain view.
 func (sl *SprintList) renderPlain(w io.Writer) error {
-	// sprint view supports only \t as delimiter, not custom.
+	// Sprint view supports only \t as delimiter, not custom.
 	return renderPlain(w, sl.tableData(), "\t")
-}
-
-func (sl *SprintList) data() []tui.PreviewData {
-	data := make([]tui.PreviewData, 0, len(sl.Data))
-
-	data = append(data, tui.PreviewData{
-		Key:  "help",
-		Menu: "?",
-		Contents: func(s string) interface{} {
-			return helpText
-		},
-	})
-	for _, s := range sl.Data {
-		bid, sid := s.BoardID, s.ID
-
-		data = append(data, tui.PreviewData{
-			Key: fmt.Sprintf("%d-%d-%s", bid, sid, s.StartDate),
-			Menu: tview.Escape(fmt.Sprintf(
-				"➤ #%d %s: [%s - %s]",
-				s.ID,
-				prepareTitle(s.Name),
-				FormatDateTimeHuman(s.StartDate, time.RFC3339),
-				FormatDateTimeHuman(s.EndDate, time.RFC3339),
-			)),
-			Contents: func(key string) interface{} {
-				issues := sl.Issues(bid, sid)
-				return sl.tabularize(issues)
-			},
-		})
-	}
-
-	return data
-}
-
-func (sl *SprintList) tabularize(issues []*jira.Issue) tui.TableData {
-	data := make(tui.TableData, 0, 1+len(issues))
-
-	data = append(data, ValidIssueColumns())
-	for _, issue := range issues {
-		data = append(data, []string{
-			issue.Fields.IssueType.Name,
-			issue.Key,
-			prepareTitle(issue.Fields.Summary),
-			issue.Fields.Status.Name,
-			issue.Fields.Assignee.Name,
-			issue.Fields.Reporter.Name,
-			issue.Fields.Priority.Name,
-			issue.Fields.Resolution.Name,
-			formatDateTime(issue.Fields.Created, jira.RFC3339, sl.Display.Timezone),
-			formatDateTime(issue.Fields.Updated, jira.RFC3339, sl.Display.Timezone),
-			strings.Join(issue.Fields.Labels, ","),
-		})
-	}
-
-	return data
 }
 
 func (sl *SprintList) validColumnsMap() map[string]struct{} {
@@ -187,11 +61,11 @@ func (sl *SprintList) tableHeader() []string {
 	return headers
 }
 
-func (sl *SprintList) tableData() tui.TableData {
-	var data tui.TableData
+func (sl *SprintList) tableData() [][]string {
+	var data [][]string
 
 	headers := sl.tableHeader()
-	if !sl.Display.Plain || !sl.Display.NoHeaders {
+	if !sl.Display.NoHeaders {
 		data = append(data, headers)
 	}
 	if len(headers) == 0 {

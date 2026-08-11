@@ -1,30 +1,24 @@
 package view
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"strings"
 	"text/tabwriter"
 
-	"github.com/ankitpokhrel/jira-cli/api"
-	"github.com/ankitpokhrel/jira-cli/internal/cmdutil"
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
-	"github.com/ankitpokhrel/jira-cli/pkg/tui"
 )
 
 // DisplayFormat is a issue display type.
 type DisplayFormat struct {
-	Plain        bool
-	Delimiter    string
-	CSV          bool
-	NoHeaders    bool
-	NoTruncate   bool
-	Columns      []string
-	FixedColumns uint
-	Comments     uint
-	TableStyle   tui.TableStyle
-	Timezone     string
+	Plain      bool
+	Delimiter  string
+	CSV        bool
+	NoHeaders  bool
+	NoTruncate bool
+	Columns    []string
+	Comments   uint
+	Timezone   string
 }
 
 // IssueList is a list view for issues.
@@ -33,106 +27,23 @@ type IssueList struct {
 	Server     string
 	Data       []*jira.Issue
 	Display    DisplayFormat
-	Refresh    tui.RefreshFunc
 	FooterText string
 }
 
 // Render renders the view.
 func (l *IssueList) Render() error {
-	// Prioritize CSV format when explicitly requested
+	// Prioritize CSV format when explicitly requested.
 	if l.Display.CSV {
-		w := os.Stdout
-		return l.renderCSV(w)
+		return l.renderCSV(os.Stdout)
 	}
 
-	if l.Display.Plain || tui.IsDumbTerminal() || tui.IsNotTTY() {
-		// custom delimiter is used only in plain mode, otherwise \t is used
-		delimeter := "\t"
-		if l.Display.Plain {
-			delimeter = l.Display.Delimiter
-		}
-		w := tabwriter.NewWriter(os.Stdout, 0, tabWidth, 1, '\t', 0)
-		return l.renderPlain(w, delimeter)
+	// Custom delimiter is used only in plain mode, otherwise \t is used.
+	delimeter := "\t"
+	if l.Display.Plain {
+		delimeter = l.Display.Delimiter
 	}
-
-	renderer, err := MDRenderer()
-	if err != nil {
-		return err
-	}
-
-	data := l.data()
-	if l.FooterText == "" {
-		l.FooterText = fmt.Sprintf("Showing %d results for project %q", len(data)-1, l.Project)
-	}
-
-	view := tui.NewTable(
-		tui.WithTableStyle(l.Display.TableStyle),
-		tui.WithTableFooterText(l.FooterText),
-		tui.WithTableHelpText(tableHelpText),
-		tui.WithSelectedFunc(navigate(l.Server)),
-		tui.WithViewModeFunc(func(r, c int, _ any) (func() any, func(any) (string, error)) {
-			dataFn := func() any {
-				ci := data.GetIndex(fieldKey)
-				iss, _ := api.ProxyGetIssue(cmdutil.NewJiraClient(false), data.Get(r, ci), jira.NewNumCommentsFilter(l.Display.Comments))
-				return iss
-			}
-			renderFn := func(i any) (string, error) {
-				iss := Issue{
-					Server:  l.Server,
-					Data:    i.(*jira.Issue),
-					Options: IssueOption{NumComments: l.Display.Comments},
-				}
-				return iss.RenderedOut(renderer)
-			}
-			return dataFn, renderFn
-		}),
-		tui.WithCopyFunc(copyURL(l.Server)),
-		tui.WithCopyKeyFunc(copyKey()),
-		tui.WithMoveFunc(func(r, c int) func() (string, []string, tui.MoveHandlerFunc, string, tui.RefreshTableStateFunc) {
-			dataFn := func() (string, []string, tui.MoveHandlerFunc, string, tui.RefreshTableStateFunc) {
-				key := data[r][data.GetIndex(fieldKey)]
-				client := cmdutil.NewJiraClient(false)
-				transitions, _ := api.ProxyTransitions(client, key)
-
-				actions := make([]string, 0, len(transitions))
-				for _, t := range transitions {
-					actions = append(actions, t.Name)
-				}
-
-				actionHandler := func(state string) error {
-					var tr *jira.Transition
-					for _, t := range transitions {
-						if strings.EqualFold(t.Name, state) {
-							tr = t
-							break
-						}
-					}
-					if tr == nil {
-						return fmt.Errorf("transition '%s' not found", state)
-					}
-					_, err := client.Transition(key, &jira.TransitionRequest{
-						Transition: &jira.TransitionRequestData{
-							ID:   tr.ID.String(),
-							Name: tr.Name,
-						},
-					})
-					return err
-				}
-
-				statusFieldIdx := data.GetIndex(fieldStatus)
-				currentStatus := data.Get(r, statusFieldIdx)
-
-				return key, actions, actionHandler, currentStatus, func(r, c int, val string) {
-					data.Update(r, statusFieldIdx, val)
-				}
-			}
-			return dataFn
-		}),
-		tui.WithRefreshFunc(l.Refresh),
-		tui.WithFixedColumns(l.Display.FixedColumns),
-	)
-
-	return view.Paint(data)
+	w := tabwriter.NewWriter(os.Stdout, 0, tabWidth, 1, '\t', 0)
+	return l.renderPlain(w, delimeter)
 }
 
 // renderPlain renders the issue in plain view.
@@ -165,36 +76,28 @@ func (l *IssueList) header() []string {
 		return validColumns[0:4]
 	}
 
-	var (
-		headers   []string
-		hasKeyCol bool
-	)
+	return l.upperColumns(l.Display.Columns)
+}
+
+func (l *IssueList) upperColumns(cols []string) []string {
+	var headers []string
 
 	columnsMap := l.validColumnsMap()
-	for _, c := range l.Display.Columns {
+	for _, c := range cols {
 		c = strings.ToUpper(c)
 		if _, ok := columnsMap[c]; ok {
-			headers = append(headers, strings.ToUpper(c))
+			headers = append(headers, c)
 		}
-		if c == fieldKey {
-			hasKeyCol = true
-		}
-	}
-
-	// Key field is required in TUI to fetch relevant data later.
-	// So, we will prepend the field if it is not available.
-	if !hasKeyCol {
-		headers = append([]string{fieldKey}, headers...)
 	}
 
 	return headers
 }
 
-func (l *IssueList) data() tui.TableData {
-	var data tui.TableData
+func (l *IssueList) data() [][]string {
+	var data [][]string
 
 	headers := l.header()
-	if (!l.Display.Plain && !l.Display.CSV) || !l.Display.NoHeaders {
+	if !l.Display.NoHeaders {
 		data = append(data, headers)
 	}
 	for _, iss := range l.Data {

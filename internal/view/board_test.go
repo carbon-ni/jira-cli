@@ -22,7 +22,7 @@ func TestBoardRender(t *testing.T) {
 
 	expected := `ID	NAME	TYPE
 1	First	scrum
-2	[2[] Second	kanban
+2	[2] Second	kanban
 3	Third	nextgen
 `
 	assert.Equal(t, expected, b.String())

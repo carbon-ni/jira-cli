@@ -4,10 +4,12 @@ View renderers. Each domain gets its own file with a `<Domain>List` struct imple
 
 ## Boundaries
 
-- Can import: `api`, `pkg/tui`, `pkg/jira`, `pkg/jira/filter`.
+- Can import: `api`, `pkg/jira`, `pkg/jira/filter`.
 - Cannot import: commands (`internal/cmd/*`).
 
 ## Pattern
+
+Renderers are plain-text only (table/CSV). There is no interactive TUI layer anymore.
 
 ```go
 type FooList struct {
@@ -15,20 +17,21 @@ type FooList struct {
     Server  string
     Data    []*jira.Foo
     Display DisplayFormat
-    Refresh tui.RefreshFunc
 }
 
 func (l *FooList) Render() error {
-    // Plain/CSV path
-    if l.Display.Plain || tui.IsDumbTerminal() { ... }
-    // TUI path
-    view := tui.NewTable(tui.WithSelectedFunc(...), ...)
-    return view.Paint(l.data())
+    if l.Display.CSV {
+        return l.renderCSV(os.Stdout)
+    }
+    w := tabwriter.NewWriter(os.Stdout, 0, tabWidth, 1, '\t', 0)
+    return l.renderPlain(w, delimiter)
 }
 ```
 
 Canonical example: `issues.go` (`IssueList`).
 
+Terminal-capability checks (`cmdutil.IsDumbTerminal`, `cmdutil.IsNotTTY`) live in `internal/cmdutil`, not here.
+
 ## Agent-facing output
 
-Commands that emit structured TOON/JSON use `cmdutil.PrintStructured()`, not this layer. View renderers are for human-facing TUI/plain/CSV output only.
+Commands that emit structured TOON/JSON use `cmdutil.PrintStructured()`, not this layer. View renderers are for human-facing plain/CSV output only.

@@ -8,7 +8,6 @@ import (
 
 	"github.com/ankitpokhrel/jira-cli/pkg/adf"
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
-	"github.com/ankitpokhrel/jira-cli/pkg/tui"
 )
 
 func TestIssueDetailsRenderInPlainView(t *testing.T) {
@@ -84,7 +83,7 @@ func TestIssueDetailsRenderInPlainView(t *testing.T) {
 	actual := issue.String()
 
 	assert.NoError(t, issue.renderPlain(&b))
-	assert.Equal(t, tui.TextData(expected), tui.TextData(actual))
+	assert.Equal(t, expected, actual)
 }
 
 func TestIssueDetailsWithV2Description(t *testing.T) {
@@ -235,7 +234,7 @@ func TestIssueDetailsWithV2Description(t *testing.T) {
 	}
 	actual := issue.String()
 
-	assert.Equal(t, tui.TextData(expected), tui.TextData(actual))
+	assert.Equal(t, expected, actual)
 }
 
 func TestSeparator(t *testing.T) {

@@ -14,7 +14,6 @@ import (
 	"github.com/ankitpokhrel/jira-cli/pkg/adf"
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
 	"github.com/ankitpokhrel/jira-cli/pkg/md"
-	"github.com/ankitpokhrel/jira-cli/pkg/tui"
 )
 
 const defaultSummaryLength = 73 // +1 to take ellipsis '…' into account.
@@ -55,7 +54,7 @@ type Issue struct {
 
 // Render renders the view.
 func (i Issue) Render() error {
-	if i.Display.Plain || tui.IsDumbTerminal() || tui.IsNotTTY() {
+	if i.Display.Plain || cmdutil.IsDumbTerminal() || cmdutil.IsNotTTY() {
 		return i.renderPlain(os.Stdout)
 	}
 	r, err := MDRenderer()
@@ -66,7 +65,8 @@ func (i Issue) Render() error {
 	if err != nil {
 		return err
 	}
-	return tui.PagerOut(out)
+	_, err = fmt.Print(out)
+	return err
 }
 
 // RenderedOut translates raw data to the format we want to display in.

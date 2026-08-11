@@ -7,7 +7,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
-	"github.com/ankitpokhrel/jira-cli/pkg/tui"
 )
 
 // ServerInfoOption is a functional option to wrap serverinfo properties.
@@ -52,5 +51,6 @@ Deployment Type: %s
 Default Locale:  %s
 `, s.data.Version, s.data.BuildNumber, s.data.DeploymentType, s.data.DefaultLocale.Locale)
 
-	return tui.PagerOut(s.buf.String())
+	_, err := fmt.Print(s.buf.String())
+	return err
 }

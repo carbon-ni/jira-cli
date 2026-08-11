@@ -14,35 +14,28 @@ import (
 	"github.com/ankitpokhrel/jira-cli/internal/query"
 	"github.com/ankitpokhrel/jira-cli/internal/view"
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
-	"github.com/ankitpokhrel/jira-cli/pkg/tui"
 )
 
 const (
 	numSprints = 50 // This is the maximum result returned by Jira API at once.
 	helpText   = `
-Sprints are displayed in an explorer view by default. You can use --table
-and --plain flags to display output in different modes.`
+Sprints are displayed in a plain table view by default.`
 
 	examples = `$ jira sprint list
 
-# Display sprints or sprint issues in an interactive list
-$ jira sprint list --table
-$ jira sprint list <SPRINT_ID> --table
+# List issues in a sprint
+$ jira sprint list <SPRINT_ID>
 
-# Display sprints or sprint issues in a plain table view
-$ jira sprint list --table --plain
-$ jira sprint list <SPRINT_ID> --plain
-
-# Display sprints or sprint issues in a plain table view without headers
-$ jira sprint list --table --plain --no-headers
+# List sprints or sprint issues without headers
+$ jira sprint list --no-headers
 $ jira sprint list <SPRINT_ID> --no-headers
 
-# Display some columns of sprint or sprint issues in a plain table view
-$ jira sprint list --table --plain --columns name,start,end
-$ jira sprint list <SPRINT_ID> --plain --columns type,key,summary
+# Display some columns of sprints or sprint issues
+$ jira sprint list --columns name,start,end
+$ jira sprint list <SPRINT_ID> --columns type,key,summary
 
-# Display sprint issues in a plain table view and show all fields
-$ jira sprint list <SPRINT_ID> --plain --no-truncate`
+# Display sprint issues and show all fields
+$ jira sprint list <SPRINT_ID> --no-truncate`
 )
 
 // NewCmdList is a sprint list command.
@@ -88,11 +81,11 @@ func sprintList(cmd *cobra.Command, args []string) {
 		sprintID, err := strconv.Atoi(args[0])
 		cmdutil.ExitIfError(err)
 
-		singleSprintView(sprintQuery, cmd.Flags(), boardID, sprintID, project, server, client, nil, format)
+		singleSprintView(sprintQuery, cmd.Flags(), sprintID, project, server, client, nil, format)
 	}
 }
 
-func singleSprintView(sprintQuery *query.Sprint, flags query.FlagParser, boardID, sprintID int, project, server string, client *jira.Client, sprint *jira.Sprint, format string) {
+func singleSprintView(sprintQuery *query.Sprint, flags query.FlagParser, sprintID int, project, server string, client *jira.Client, sprint *jira.Sprint, format string) {
 	issues, jql, err := func() ([]*jira.Issue, string, error) {
 		s := cmdutil.Info("Fetching sprint issues...")
 		defer s.Stop()
@@ -139,9 +132,6 @@ func singleSprintView(sprintQuery *query.Sprint, flags query.FlagParser, boardID
 	noTruncate, err := flags.GetBool("no-truncate")
 	cmdutil.ExitIfError(err)
 
-	fixedColumns, err := flags.GetUint("fixed-columns")
-	cmdutil.ExitIfError(err)
-
 	columns, err := flags.GetString("columns")
 	cmdutil.ExitIfError(err)
 
@@ -172,24 +162,19 @@ func singleSprintView(sprintQuery *query.Sprint, flags query.FlagParser, boardID
 		Server:     server,
 		Data:       issues,
 		FooterText: ft,
-		Refresh: func() {
-			singleSprintView(sprintQuery, flags, boardID, sprintID, project, server, client, nil, format)
-		},
 		Display: view.DisplayFormat{
-			Plain:        plain,
-			Delimiter:    delimiter,
-			CSV:          csv,
-			NoHeaders:    noHeaders,
-			NoTruncate:   noTruncate,
-			FixedColumns: fixedColumns,
+			Plain:      plain,
+			Delimiter:  delimiter,
+			CSV:        csv,
+			NoHeaders:  noHeaders,
+			NoTruncate: noTruncate,
 			Columns: func() []string {
 				if columns != "" {
 					return strings.Split(columns, ",")
 				}
 				return []string{}
 			}(),
-			TableStyle: cmdutil.GetTUIStyleConfig(),
-			Timezone:   viper.GetString("timezone"),
+			Timezone: viper.GetString("timezone"),
 		},
 	}
 
@@ -218,7 +203,7 @@ func sprintExplorerView(sprintQuery *query.Sprint, flags query.FlagParser, board
 		if sprintQuery.Params().Next {
 			sprint = sprints[len(sprints)-1]
 		}
-		singleSprintView(sprintQuery, flags, boardID, sprint.ID, project, server, client, sprint, format)
+		singleSprintView(sprintQuery, flags, sprint.ID, project, server, client, sprint, format)
 		return
 	}
 
@@ -233,9 +218,6 @@ func sprintExplorerView(sprintQuery *query.Sprint, flags query.FlagParser, board
 	noHeaders, err := flags.GetBool("no-headers")
 	cmdutil.ExitIfError(err)
 
-	fixedColumns, err := flags.GetUint("fixed-columns")
-	cmdutil.ExitIfError(err)
-
 	columns, err := flags.GetString("columns")
 	cmdutil.ExitIfError(err)
 
@@ -244,51 +226,20 @@ func sprintExplorerView(sprintQuery *query.Sprint, flags query.FlagParser, board
 		Board:   viper.GetString("board.name"),
 		Server:  server,
 		Data:    sprints,
-		Issues: func(boardID, sprintID int) []*jira.Issue {
-			iq, err := getIssueQuery(project, flags, sprintQuery.Params().ShowAllIssues)
-			if err != nil {
-				return []*jira.Issue{}
-			}
-			resp, err := client.SprintIssues(sprintID, iq, sprintQuery.Params().From, sprintQuery.Params().Limit)
-			if err != nil {
-				return []*jira.Issue{}
-			}
-			return resp.Issues
-		},
 		Display: view.DisplayFormat{
-			Plain:        plain,
-			NoHeaders:    noHeaders,
-			FixedColumns: fixedColumns,
+			Plain:     plain,
+			NoHeaders: noHeaders,
 			Columns: func() []string {
 				if columns != "" {
 					return strings.Split(columns, ",")
 				}
 				return []string{}
 			}(),
-			TableStyle: cmdutil.GetTUIStyleConfig(),
-			Timezone:   viper.GetString("timezone"),
+			Timezone: viper.GetString("timezone"),
 		},
 	}
 
-	table, err := flags.GetBool("table")
-	cmdutil.ExitIfError(err)
-
-	if table || tui.IsDumbTerminal() || tui.IsNotTTY() {
-		cmdutil.ExitIfError(v.RenderInTable())
-	} else {
-		cmdutil.ExitIfError(v.Render())
-	}
-}
-
-func getIssueQuery(project string, flags query.FlagParser, showAll bool) (string, error) {
-	q, err := query.NewIssue(project, flags)
-	if err != nil {
-		return "", err
-	}
-	if showAll {
-		q.Params().JQL = "project IS NOT EMPTY"
-	}
-	return q.Get(), nil
+	cmdutil.ExitIfError(v.Render())
 }
 
 func setFlags(cmd *cobra.Command) {
@@ -296,11 +247,9 @@ func setFlags(cmd *cobra.Command) {
 		"Valid values are future, active and closed.\n"+
 		`Defaults to "active,closed"`)
 	cmd.Flags().Bool("show-all-issues", false, "Show sprint issues from all projects")
-	cmd.Flags().Bool("table", false, "Display sprints in a table view")
 	cmd.Flags().String("columns", "", "Comma separated list of columns to display in the plain mode.\n"+
 		fmt.Sprintf("Accepts (for sprint list): %s", strings.Join(view.ValidSprintColumns(), ", "))+
 		fmt.Sprintf("\nAccepts (for sprint issues): %s", strings.Join(view.ValidIssueColumns(), ", ")))
-	cmd.Flags().Uint("fixed-columns", 1, "Number of fixed columns in the interactive mode")
 	cmd.Flags().Bool("current", false, "List issues in current active sprint")
 	cmd.Flags().Bool("prev", false, "List issues in previous sprint")
 	cmd.Flags().Bool("next", false, "List issues in next planned sprint")

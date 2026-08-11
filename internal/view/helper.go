@@ -5,59 +5,18 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"regexp"
 	"strings"
 	"text/tabwriter"
 	"time"
 
-	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/glamour"
 	"github.com/fatih/color"
 	"github.com/mgutz/ansi"
-	"github.com/rivo/tview"
-
-	"github.com/ankitpokhrel/jira-cli/internal/cmdutil"
-	"github.com/ankitpokhrel/jira-cli/pkg/browser"
-	"github.com/ankitpokhrel/jira-cli/pkg/tui"
 )
 
 const (
 	wordWrap = 120
 	tabWidth = 8
-	helpText = `USAGE
-	-----
-	
-	The layout contains 2 sections, viz: Sidebar and Contents screen.  
-	
-	You can use up and down arrow keys or 'j' and 'k' letters to navigate through the sidebar.
-	Press 'w' or Tab to toggle focus between the sidebar and the contents screen.
-	
-	On contents screen:
-	  - Use arrow keys or 'j', 'k', 'h', and 'l' letters to navigate through the issue list.
-	  - Use 'g' and 'SHIFT+G' to quickly navigate to the top and bottom respectively.
-	  - Press 'v' to view selected issue details.
-	  - Press 'c' to copy issue URL to the system clipboard.
-	  - Press 'CTRL+K' to copy issue key to the system clipboard.
-	  - Hit ENTER to open the selected issue in a browser.
-	
-	Press 'q' / ESC / CTRL+C to quit.`
-
-	tableHelpText = `[default]ACTIONS AVAILABLE IN THE TUI
-----------------------------
-
-* [yellow]← → ↑ ↓ / j, k, h, l[default] to navigate through the list
-* [yellow]g[default] to quickly navigate to the top of the list
-* [yellow]G[default] to quickly navigate to the bottom of the list
-* [yellow]CTRL + f[default] to scroll through a page downwards
-* [yellow]CTRL + b[default] to scroll through a page upwards
-* [yellow]v[default] to view selected issue details
-* [yellow]m[default] to move/transition selected issue
-* [yellow]CTRL + r / F5[default] to refresh the issues list
-* [yellow]ENTER[default] to open the selected issue in the browser
-* [yellow]c[default] to copy issue URL to the system clipboard
-* [yellow]CTRL + k[default] to copy issue key to the system clipboard
-* [yellow]q / ESC / CTRL + c[default] to quit the app
-* [yellow]?[default] to view this help page`
 )
 
 // ValidIssueColumns returns valid columns for issue list.
@@ -113,50 +72,14 @@ func formatDateTime(dt, format, tz string) string {
 }
 
 func prepareTitle(text string) string {
-	text = strings.TrimSpace(text)
-	return tview.Escape(text)
+	return strings.TrimSpace(text)
 }
 
-func issueKeyFromTuiData(r int, d any) string {
-	var path string
-
-	switch data := d.(type) {
-	case tui.TableData:
-		path = data.Get(r, data.GetIndex(fieldKey))
-	case tui.PreviewData:
-		path = data.Key
-	}
-
-	return path
-}
-
-func jiraURLFromTuiData(server string, r int, d any) string {
-	return cmdutil.GenerateServerBrowseURL(server, issueKeyFromTuiData(r, d))
-}
-
-func navigate(server string) tui.SelectedFunc {
-	return func(r, _ int, d any) {
-		_ = browser.Browse(jiraURLFromTuiData(server, r, d))
-	}
-}
-
-func copyURL(server string) tui.CopyFunc {
-	return func(r, _ int, d any) {
-		_ = clipboard.WriteAll(jiraURLFromTuiData(server, r, d))
-	}
-}
-
-func copyKey() tui.CopyKeyFunc {
-	return func(r, _ int, d any) {
-		_ = clipboard.WriteAll(issueKeyFromTuiData(r, d))
-	}
-}
-
-func renderPlain(w io.Writer, data tui.TableData, delimiter string) error {
+func renderPlain(w io.Writer, data [][]string, delimiter string) error {
 	for _, items := range data {
 		n := len(items)
 		for j, v := range items {
-			_, _ = fmt.Fprintf(w, "%s", unescape(v))
+			_, _ = fmt.Fprintf(w, "%s", v)
 			if j != n-1 {
 				_, _ = fmt.Fprintf(w, "%s", delimiter)
 			}
@@ -170,7 +93,7 @@ func renderPlain(w io.Writer, data tui.TableData, delimiter string) error {
 	return nil
 }
 
-func renderCSV(w io.Writer, data tui.TableData) error {
+func renderCSV(w io.Writer, data [][]string) error {
 	csvwrt := csv.NewWriter(w)
 
 	for _, items := range data {
@@ -184,11 +107,6 @@ func renderCSV(w io.Writer, data tui.TableData) error {
 		return err
 	}
 	return nil
-}
-
-func unescape(s string) string {
-	pattern := regexp.MustCompile(`(\[[a-zA-Z0-9_,;: \-\."#]+\[*)\[\]`)
-	return pattern.ReplaceAllString(s, "$1]")
 }
 
 func coloredOut(msg string, clr color.Attribute, attrs ...color.Attribute) string {

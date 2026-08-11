@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
-	"github.com/ankitpokhrel/jira-cli/pkg/tui"
 )
 
 func TestIssueData(t *testing.T) {
@@ -20,16 +19,16 @@ func TestIssueData(t *testing.T) {
 			NoHeaders: false,
 		},
 	}
-	expected := tui.TableData{
-		[]string{
+	expected := [][]string{
+		{
 			"TYPE", "KEY", "SUMMARY", "STATUS", "ASSIGNEE", "REPORTER", "PRIORITY", "RESOLUTION",
 			"CREATED", "UPDATED", "LABELS",
 		},
-		[]string{
+		{
 			"Bug", "TEST-1", "This is a test", "Done", "Person A", "Person Z", "High", "Fixed",
 			"2020-12-13 14:05:20", "2020-12-13 14:07:20", "krakatit",
 		},
-		[]string{
+		{
 			"Story", "TEST-2", "This is another test", "Open", "", "Person A", "Normal", "",
 			"2020-12-13 14:05:20", "2020-12-13 14:07:20", "pat,mat",
 		},

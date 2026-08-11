@@ -7,7 +7,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
-	"github.com/ankitpokhrel/jira-cli/pkg/tui"
 )
 
 // ProjectVersionOptions is a functional option to wrap project version properties.
@@ -59,7 +58,8 @@ func (r Release) Render() error {
 		}
 	}
 
-	return tui.PagerOut(r.buf.String())
+	_, err := fmt.Print(r.buf.String())
+	return err
 }
 
 func (r Release) header() []string {

@@ -26,9 +26,9 @@ $ jira issue list -yHigh -s"In Progress" --created month -lbackend -l"high prio"
 You can also add an optional search query as a positional argument, which functions the same
 as entering a search query into the Jira UI's search box.
 
-Issues are displayed in an interactive list view by default. You can use a --plain flag
-to display output in a plain text mode. A --no-headers flag will hide the table headers
-in plain view. A --no-truncate flag will display all available fields in plain mode.`
+Issues are displayed in a plain table view by default. A --no-headers flag will hide
+the table headers. A --no-truncate flag will display all available fields. Use --plain
+with a custom --delimiter for delimiter-friendly output.`
 
 	examples = `$ jira issue list
 
@@ -163,9 +163,6 @@ func loadList(cmd *cobra.Command, args []string) {
 	noTruncate, err := cmd.Flags().GetBool("no-truncate")
 	cmdutil.ExitIfError(err)
 
-	fixedColumns, err := cmd.Flags().GetUint("fixed-columns")
-	cmdutil.ExitIfError(err)
-
 	columns, err := cmd.Flags().GetString("columns")
 	cmdutil.ExitIfError(err)
 
@@ -181,25 +178,20 @@ func loadList(cmd *cobra.Command, args []string) {
 		Project: project,
 		Server:  server,
 		Data:    issues,
-		Refresh: func() {
-			loadList(cmd, args)
-		},
 		Display: view.DisplayFormat{
-			Plain:        plain,
-			Delimiter:    delimiter,
-			CSV:          csv,
-			NoHeaders:    noHeaders,
-			NoTruncate:   noTruncate,
-			FixedColumns: fixedColumns,
-			Comments:     comments,
+			Plain:      plain,
+			Delimiter:  delimiter,
+			CSV:        csv,
+			NoHeaders:  noHeaders,
+			NoTruncate: noTruncate,
+			Comments:   comments,
 			Columns: func() []string {
 				if columns != "" {
 					return strings.Split(columns, ",")
 				}
 				return []string{}
 			}(),
-			TableStyle: cmdutil.GetTUIStyleConfig(),
-			Timezone:   viper.GetString("timezone"),
+			Timezone: viper.GetString("timezone"),
 		},
 	}
 
@@ -246,10 +238,10 @@ func SetFlags(cmd *cobra.Command) {
 	cmd.Flags().String("order-by", "created", "Field to order the list with")
 	cmd.Flags().Bool("reverse", false, "Reverse the display order (default \"DESC\")")
 	cmd.Flags().String("paginate", "0:100", "Paginate the result. Max 100 at a time, format: <from>:<limit> where <from> is optional")
-	cmd.Flags().Bool("plain", false, "Display output in plain mode")
-	cmd.Flags().Bool("no-headers", false, "Don't display table headers in plain mode. Works only with --plain")
-	cmd.Flags().Bool("no-truncate", false, "Show all available columns in plain mode. Works only with --plain")
-	cmd.Flags().String("delimiter", "\t", "Custom delimeter for columns in plain mode. Works only with --plain")
+	cmd.Flags().Bool("plain", false, "Compact plain mode: truncates columns and enables a custom --delimiter")
+	cmd.Flags().Bool("no-headers", false, "Don't display table headers")
+	cmd.Flags().Bool("no-truncate", false, "Show all available columns (default outside --plain mode)")
+	cmd.Flags().String("delimiter", "\t", "Custom delimiter for columns. Use with --plain")
 	cmd.Flags().Uint("comments", 1, "Show N comments when viewing the issue")
 	cmd.Flags().Bool("raw", false, "Print raw JSON output")
 	cmd.Flags().Bool("csv", false, "Print output in CSV format")
@@ -257,6 +249,5 @@ func SetFlags(cmd *cobra.Command) {
 	if cmd.HasParent() && cmd.Parent().Name() != "sprint" {
 		cmd.Flags().String("columns", "", "Comma separated list of columns to display in the plain mode.\n"+
 			fmt.Sprintf("Accepts: %s", strings.Join(view.ValidIssueColumns(), ", ")))
-		cmd.Flags().Uint("fixed-columns", 1, "Number of fixed columns in the interactive mode")
 	}
 }

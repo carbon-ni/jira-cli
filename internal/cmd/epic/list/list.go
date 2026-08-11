@@ -13,33 +13,26 @@ import (
 	"github.com/ankitpokhrel/jira-cli/internal/query"
 	"github.com/ankitpokhrel/jira-cli/internal/view"
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
-	"github.com/ankitpokhrel/jira-cli/pkg/tui"
 )
 
 const (
 	helpText = `List lists top 100 epics.
 
-By default epics are displayed in an explorer view. You can use --table
-and --plain flags to display output in different modes.`
+Epics are displayed in a plain table view by default.`
 
-	examples = `# Display epics in an explorer view
+	examples = `# List epics in the configured project
 $ jira epic list
 
-# Display epics or epic issues in an interactive table view
-$ jira epic list --table
+# List issues in an epic
 $ jira epic list <KEY>
 
-# Display epics or epic issues in a plain table view
-$ jira epic list --table --plain
-$ jira epic list <KEY> --plain
+# List epics or epic issues without headers
+$ jira epic list --no-headers
+$ jira epic list <KEY> --no-headers
 
-# Display epics or epic issues in a plain table view without headers
-$ jira epic list --table --plain --no-headers
-$ jira epic list <KEY> --plain --no-headers
-
-# Display some columns of epic or epic issues in a plain table view
-$ jira epic list --table --plain --columns key,summary,status
-$ jira epic list <KEY> --plain --columns type,key,summary`
+# Display some columns of epics or epic issues
+$ jira epic list --columns key,summary,status
+$ jira epic list <KEY> --columns type,key,summary`
 )
 
 // NewCmdList is a list command.
@@ -81,7 +74,7 @@ func epicList(cmd *cobra.Command, args []string) {
 	client := cmdutil.NewJiraClient(debug)
 
 	if len(args) == 0 {
-		epicExplorerView(cmd, cmd.Flags(), project, projectType, server, client, format)
+		epicExplorerView(cmd, cmd.Flags(), project, client, format)
 	} else {
 		key := jira.GetIssueKey(project, args[0])
 		singleEpicView(cmd.Flags(), key, project, projectType, server, client, format)
@@ -145,9 +138,6 @@ func singleEpicView(flags query.FlagParser, key, project, projectType, server st
 	noTruncate, err := flags.GetBool("no-truncate")
 	cmdutil.ExitIfError(err)
 
-	fixedColumns, err := flags.GetUint("fixed-columns")
-	cmdutil.ExitIfError(err)
-
 	columns, err := flags.GetString("columns")
 	cmdutil.ExitIfError(err)
 
@@ -155,31 +145,26 @@ func singleEpicView(flags query.FlagParser, key, project, projectType, server st
 		Project: project,
 		Server:  server,
 		Data:    issues,
-		Refresh: func() {
-			singleEpicView(flags, key, project, projectType, server, client, format)
-		},
 		Display: view.DisplayFormat{
-			Plain:        plain,
-			Delimiter:    delimiter,
-			CSV:          csv,
-			NoHeaders:    noHeaders,
-			NoTruncate:   noTruncate,
-			FixedColumns: fixedColumns,
+			Plain:      plain,
+			Delimiter:  delimiter,
+			CSV:        csv,
+			NoHeaders:  noHeaders,
+			NoTruncate: noTruncate,
 			Columns: func() []string {
 				if columns != "" {
 					return strings.Split(columns, ",")
 				}
 				return []string{}
 			}(),
-			TableStyle: cmdutil.GetTUIStyleConfig(),
-			Timezone:   viper.GetString("timezone"),
+			Timezone: viper.GetString("timezone"),
 		},
 	}
 
 	cmdutil.ExitIfError(v.Render())
 }
 
-func epicExplorerView(cmd *cobra.Command, flags query.FlagParser, project, projectType, server string, client *jira.Client, format string) {
+func epicExplorerView(cmd *cobra.Command, flags query.FlagParser, project string, client *jira.Client, format string) {
 	q, err := query.NewIssue(project, flags)
 	cmdutil.ExitIfError(err)
 
@@ -210,49 +195,12 @@ func epicExplorerView(cmd *cobra.Command, flags query.FlagParser, project, proje
 		return
 	}
 
-	fixedColumns, err := flags.GetUint("fixed-columns")
-	cmdutil.ExitIfError(err)
-
-	v := view.EpicList{
-		Project: project,
-		Server:  server,
-		Data:    epics,
-		Issues: func(key string) []*jira.Issue {
-			var resp *jira.SearchResult
-
-			if projectType == jira.ProjectTypeNextGen {
-				q.Params().Parent = key
-				q.Params().IssueType = ""
-
-				resp, err = client.Search(q.Get(), q.Params().Limit)
-			} else {
-				resp, err = client.EpicIssues(key, "", q.Params().From, q.Params().Limit)
-			}
-			if err != nil {
-				return []*jira.Issue{}
-			}
-			return resp.Issues
-		},
-		Display: view.DisplayFormat{
-			FixedColumns: fixedColumns,
-			TableStyle:   cmdutil.GetTUIStyleConfig(),
-			Timezone:     viper.GetString("timezone"),
-		},
-	}
-
-	table, err := flags.GetBool("table")
-	cmdutil.ExitIfError(err)
-
-	if table || tui.IsDumbTerminal() || tui.IsNotTTY() {
-		list.List(cmd, nil)
-	} else {
-		cmdutil.ExitIfError(v.Render())
-	}
+	// Non-structured default: render epics as a plain issue table.
+	list.List(cmd, nil)
 }
 
 func setFlags(cmd *cobra.Command) {
 	list.SetFlags(cmd)
-	cmd.Flags().Bool("table", false, "Display epics in table view")
 }
 
 func hideFlags(cmd *cobra.Command) {

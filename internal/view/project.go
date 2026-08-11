@@ -7,7 +7,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
-	"github.com/ankitpokhrel/jira-cli/pkg/tui"
 )
 
 // ProjectOption is a functional option to wrap project properties.
@@ -55,7 +54,8 @@ func (p Project) Render() error {
 		}
 	}
 
-	return tui.PagerOut(p.buf.String())
+	_, err := fmt.Print(p.buf.String())
+	return err
 }
 
 func (p Project) header() []string {

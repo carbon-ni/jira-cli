@@ -10,7 +10,6 @@ import (
 	"github.com/ankitpokhrel/jira-cli/internal/query"
 	"github.com/ankitpokhrel/jira-cli/pkg/jira"
 	"github.com/ankitpokhrel/jira-cli/pkg/surveyext"
-	"github.com/ankitpokhrel/jira-cli/pkg/tui"
 )
 
 const (
@@ -57,7 +56,7 @@ func create(cmd *cobra.Command, _ []string) {
 		params: params,
 	}
 
-	if cc.isNonInteractive() || cc.params.NoInput || tui.IsDumbTerminal() {
+	if cc.isNonInteractive() || cc.params.NoInput || cmdutil.IsDumbTerminal() {
 		cc.params.NoInput = true
 
 		if cc.isMandatoryParamsMissing() {

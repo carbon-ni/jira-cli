@@ -1,6 +1,6 @@
 # jira-cli
 
-Agent-first Jira CLI in Go (a Jira for AI agents). `cobra`/`viper` for CLI, `tview`/`tcell` for TUI, `toon-go` for structured agent-facing output.
+Agent-first Jira CLI in Go (a Jira for AI agents). `cobra`/`viper` for CLI, `toon-go` for structured agent-facing output.
 
 ## Module routing
 
@@ -8,8 +8,8 @@ Agent-first Jira CLI in Go (a Jira for AI agents). `cobra`/`viper` for CLI, `tvi
 |---|---|---|
 | `api/` | [AGENTS.md](api/AGENTS.md) | Singleton client proxy with auth resolution + V2/V3 routing |
 | `pkg/jira/` | [AGENTS.md](pkg/jira/AGENTS.md) | HTTP client + domain types |
-| `pkg/tui/` | [AGENTS.md](pkg/tui/AGENTS.md) | Pure TUI rendering library |
-| `internal/view/` | [AGENTS.md](internal/view/AGENTS.md) | View renderers (issue list, sprint, epic, etc.) |
+| `pkg/tui/` | — | _Removed_ — interactive TUI was deleted; lists render plain tables by default |
+| `internal/view/` | [AGENTS.md](internal/view/AGENTS.md) | Plain/CSV view renderers (issue list, sprint, epic, etc.) |
 | `internal/query/` | — | JQL builder from CLI flags |
 | `internal/cmdutil/` | — | Formatting, errors, config home |
 | `internal/config/` | — | `jira init` wizard |
@@ -21,7 +21,6 @@ Agent-first Jira CLI in Go (a Jira for AI agents). `cobra`/`viper` for CLI, `tvi
 ## Quick rules
 
 - **All API calls go through `api.Proxy*()`**, never directly to `pkg/jira.Client`.
-- **`pkg/tui` has zero internal dependencies** — don't add any.
 - **`pkg/jira` ↔ `pkg/jira/filter` has a known cycle** — don't add cross-references.
 - **Commands never import other commands** — shared logic goes in `internal/cmdutil/` or `internal/cmdcommon/`.
 - **Default output is TOON** (machine-readable). Plain/CSV/JSON also supported.

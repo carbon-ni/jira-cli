@@ -90,9 +90,9 @@ func TestPrepareTitle(t *testing.T) {
 			expected: "<title> $#!",
 		},
 		{
-			name:     "it replace big brackets in title",
+			name:     "it preserves big brackets in title",
 			input:    "[BUG] This is a bug",
-			expected: "[BUG[] This is a bug",
+			expected: "[BUG] This is a bug",
 		},
 	}
 

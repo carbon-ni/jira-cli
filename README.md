@@ -33,7 +33,8 @@ That means:
   [TOON](https://github.com/toon-format/toon-go), designed for machines to parse. JSON is available for compatibility.
 - **Drivable, not clickable.** Commands are meant to be called, chained, and replayed by agents and scripts, not
   navigated with arrow keys.
-- **The TUI is a bonus.** The interactive view stays for humans who want it, but it is never required to get work done.
+- **No TUI.** The interactive terminal UI was removed. Lists render plain tables by default; humans and agents get
+  the same deterministic output.
 
 > [!NOTE]
 > Divergence from upstream is intentional. Anything that only makes sense for a human-first CLI will be reworked or dropped.
@@ -115,35 +116,22 @@ $ jira issue list -c ./local_jira_config.yaml
 ```
 
 ## Usage
-The tool currently comes with an issue, epic, and sprint explorer. The flags are [POSIX-compliant](https://www.gnu.org/software/libc/manual/html_node/Argument-Syntax.html).
+The tool covers issues, epics, and sprints. The flags are [POSIX-compliant](https://www.gnu.org/software/libc/manual/html_node/Argument-Syntax.html).
 You can combine available flags in any order to create a unique query. For example, the command below will give you high priority issues created this month
 with status `To Do` that are assigned to you and has the label `backend`.
 ```sh
 jira issue list -yHigh -s"To Do" --created month -lbackend -a$(jira me)
 ```
 
-### Navigation
-The lists are displayed in an interactive UI by default.
-- Use arrow keys or `j, k, h, l` characters to navigate through the list.
-- Use `g` and `G` to quickly navigate to the top and bottom respectively.
-- Use `CTRL + f` to scroll through a page downwards direction.
-- Use `CTRL + b` to scroll through a page in upwards direction.
-- Press `v` to view selected issue details.
-- Press `m` to transition the selected issue.
-- Press `CTRL + r` or `F5` to refresh the issues list.
-- Hit `ENTER` to open the selected issue in the browser.
-- Press `c` to copy issue URL to the system clipboard. This requires `xclip` / `xsel` in linux.
-- Press `CTRL + k` to copy issue key to the system clipboard.
-- In an explorer view, press `w` or `TAB` to toggle focus between the sidebar and the contents screen.
-- Press `q` / `ESC` / `CTRL + c` to quit.
-- Press `?` to open the help window.
+Read commands default to structured TOON output. For human-friendly plain tables use `--plain` (with optional `--no-headers`,
+`--no-truncate`, `--delimiter`, `--columns`), and `--format=json` for JSON.
 
 ### Resources
 - [Getting Started with JiraCLI](https://www.mslinn.com/blog/2022/08/12/jiracli.html)
 
 ## Commands
 ### Issue
-Issues are displayed in an interactive table view by default. You can output the results in a plain view using the `--plain` flag.
+Issues are displayed in a plain table view by default. Use `--plain` for a compact, delimiter-customizable plain mode.
 
 #### List
 The `list` command lets you search and navigate the issues. The issues are sorted by `created` field in descending order by default.
@@ -386,7 +374,7 @@ $ jira issue move ISSUE-1 "In Progress" --comment "Started working on it"
 $ jira issue move ISSUE-1 Done -RFixed -a$(jira me)
 ```
 
-To transition the selected issue from the TUI, press `m`.
+To transition an issue, use `jira issue move`.
 
 #### View
 The `view` command lets you see issue details in a terminal. Atlassian document is roughly converted to a markdown
@@ -526,10 +514,8 @@ $ jira issue worklog add ISSUE-1 "10m" --comment "This is a comment" --no-input
 ```
 
 ### Epic
-Epics are displayed in an explorer view by default. You can output the results in a table view using the `--table` flag.
+Epics are displayed in a plain table view by default.
 When viewing epic issues, you can use all filters available for the issue command.
-
-See [usage](#navigation) to learn more about UI interaction.
 
 #### List
 You can use all flags supported by `issue list` command here except for the issue type.
@@ -537,9 +523,6 @@ You can use all flags supported by `issue list` command here except for the issu
 ```sh
 # List epics
 $ jira epic list
-
-# List epics in a table view
-$ jira epic list --table
 
 # List epics reported by me and are open
 $ jira epic list -r$(jira me) -sOpen
@@ -591,20 +574,15 @@ $ jira epic remove ISSUE-1 ISSUE-2
 ```
 
 ### Sprint
-Sprints are displayed in an explorer view by default. You can output the results in a table view using the `--table` flag.
+Sprints are displayed in a plain table view by default.
 When viewing sprint issues, you can use all filters available for the issue command. The tool only shows 25 recent sprints.
-
-See [usage](#navigation) to learn more about UI interaction.
 
 #### List
 You can use all flags supported by `issue list` command to filter issues in the sprint.
 
 ```sh
-# List sprints in an explorer view
+# List sprints
 $ jira sprint list
-
-# List sprints in a table view
-$ jira sprint list --table
 
 # List issues in the current active sprint
 $ jira sprint list --current
@@ -622,7 +600,7 @@ $ jira sprint list --next
 $ jira sprint list --state future,active
 
 # List issues in a particular sprint. You can use all flags supported by issue list command here.
-# To get sprint id use `jira sprint list` or `jira sprint list --table`
+# To get sprint id use `jira sprint list`
 $ jira sprint list SPRINT_ID
 
 # List high priority issues in a sprint are assigned to me
@@ -730,10 +708,10 @@ Day #03: 21
 ```bash
 #!/usr/bin/env bash
 
-sprints=$(jira sprint list --table --plain --columns id,name --no-headers)
+sprints=$(jira sprint list --plain --columns id,name --no-headers)
 
 echo "${sprints}" | while IFS=$'\t' read -r id name; do
-  count=$(jira sprint list "${id}" --plain --no-headers 2>/dev/null | wc -l)
+	count=$(jira sprint list "${id}" --plain --no-headers 2>/dev/null | wc -l)
 
   printf "%10s: %3d\n" "${name}" $((count))
 done
@@ -751,10 +729,10 @@ Sprint 1:   30
 ```bash
 #!/usr/bin/env bash
 
-sprints=$(jira sprint list --table --plain --columns id,name --no-headers)
+sprints=$(jira sprint list --plain --columns id,name --no-headers)
 
 echo "${sprints}" | while IFS=$'\t' read -r id name; do
-  count=$(jira sprint list "${id}" --plain --columns assignee --no-headers 2>/dev/null | awk '{print $2}' | awk NF | sort -n | uniq | wc -l)
+	count=$(jira sprint list "${id}" --plain --columns assignee --no-headers 2>/dev/null | awk '{print $2}' | awk NF | sort -n | uniq | wc -l)
 
   printf "%10s: %3d\n" "${name}" $((count))
 done
