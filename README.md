@@ -13,13 +13,17 @@
     </p>
 </div>
 
-JiraCLI is an interactive command line tool for Atlassian Jira that will help you avoid Jira UI to some extent. This
-tool may not be able to do everything, but it has all the essential features required to improve your day-to-day workflow with Jira.
+Jira CLI is an agent-first command line interface for Atlassian Jira — a **Jira for AI agents**. Read
+commands emit deterministic, machine-readable output by default
+([TOON](https://github.com/toon-format/toon-go), with JSON for compatibility), so agents and scripts can pipe,
+parse, and replay any command without scraping tables meant for humans.
 
-The tool started with the idea of making issue search and navigation as straightforward as possible. It now includes all
-necessary features like issue creation, cloning, linking, ticket transition, and much more.
+It covers the day-to-day essentials — issue, epic, and sprint search and management, plus creation, cloning, linking,
+and ticket transition — with no interactive UI standing between you and the data.
 
-> This tool is heavily inspired by the [GitHub CLI](https://github.com/cli/cli)
+> [!NOTE]
+> This is a fork of [jira-cli](https://github.com/ankitpokhrel/jira-cli), heavily inspired by the
+> [GitHub CLI](https://github.com/cli/cli). See [Vision](#vision-a-jira-for-ai-agents) for what changed and why.
 
 ## Vision: a Jira for AI agents
 
@@ -134,7 +138,7 @@ Read commands default to structured TOON output. For human-friendly plain tables
 Issues are displayed in a plain table view by default. Use `--plain` for a compact, delimiter-customizable plain mode.
 
 #### List
-The `list` command lets you search and navigate the issues. The issues are sorted by `created` field in descending order by default.
+The `list` command lets you search and list issues. The issues are sorted by `created` field in descending order by default.
 
 ```sh
 # List recent issues
@@ -676,8 +680,20 @@ any command without flag gymnastics:
 jira issue list --created month
 ```
 
-For classic shell scripting, the `--plain` flag displays results in a simple layout that can then be manipulated from
-the shell script.
+For example, `jira issue list` prints TOON — compact, keyed, and self-describing, with a copy-runnable `hint` for
+the next step:
+
+```toon
+issues[2]{key,type,summary,status,assignee,priority,created,updated}:
+  TEST-1,Bug,Fix login redirect loop,In Progress,alice,High,"2026-08-09T14:05:20.000+0200","2026-08-10T09:30:00.000+0200"
+  TEST-2,Story,Add CSV export to reports,To Do,"",Medium,"2026-08-09T14:05:20.000+0200","2026-08-10T09:30:00.000+0200"
+total: 2
+query: "project = \"TEST\" ORDER BY created DESC"
+hint: jira issue view TEST-1
+```
+
+Use `--format=json` for JSON. For classic shell scripting, the `--plain` flag displays results in a simple layout that
+can then be manipulated from the shell script.
 
 Some example scripts are listed below.
 
