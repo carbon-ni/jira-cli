@@ -14,7 +14,7 @@
           pname = "jira-cli";
           version = "1.0.0";
           src = ./.;
-          vendorHash = "sha256-Orj3kQJYOM8kDjHGlNQVx4z3A/6661yQE+9J4SvPsWs=";
+          vendorHash = "sha256-aX8nYFkfdiYlgXg9A6zmmW12zLmIydT5iGsF73Db8rQ=";
           subPackages = [ "cmd/jira" ];
         };
       in
