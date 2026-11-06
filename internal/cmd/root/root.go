@@ -77,7 +77,12 @@ func NewCmdRoot() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "jira <command> <subcommand>",
 		Short: "Agent-first Jira CLI",
-		Long:  "Agent-first Jira command line. Machine-readable TOON output by default; interactive TUI for humans.",
+		Long: `Agent-first Jira command line. Machine-readable TOON output by default.
+
+Upload issue attachments with 'jira issue upload ISSUE-KEY FILE'.
+Requires configured authentication ('jira init'), enabled attachments, and
+Create Attachments permission on the issue.`,
+		Example: "$ jira issue upload WPB-29891 ./demo.sh",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cmd.Help()
 		},

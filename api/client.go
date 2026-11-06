@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"time"
 
@@ -40,6 +41,14 @@ func ResetClient() {
 // from the API response itself, so no V2/V3 routing is needed.
 func ProxyDownloadAttachment(c *jira.Client, att *jira.Attachment) (*http.Response, error) {
 	return c.GetAttachmentContent(context.Background(), att.Content)
+}
+
+// ProxyUploadAttachment uploads a file using the configured installation API.
+func ProxyUploadAttachment(ctx context.Context, c *jira.Client, key, filename string, content io.Reader) ([]jira.Attachment, error) {
+	if c.InstallationType() == jira.InstallationTypeLocal {
+		return c.UploadAttachmentV2(ctx, key, filename, content)
+	}
+	return c.UploadAttachment(ctx, key, filename, content)
 }
 
 // ProxyCreate uses either a v2 or v3 version of the Jira POST /issue
