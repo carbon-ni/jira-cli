@@ -81,8 +81,10 @@ func NewCmdRoot() *cobra.Command {
 
 Upload issue attachments with 'jira issue upload ISSUE-KEY FILE'.
 Requires configured authentication ('jira init'), enabled attachments, and
-Create Attachments permission on the issue.`,
-		Example: "$ jira issue upload WPB-29891 ./demo.sh",
+Create Attachments permission on the issue.
+Delete only an attachment with 'jira issue attachment delete ISSUE-KEY ATTACHMENT-ID'
+(requires Delete Own Attachments or Delete All Attachments permission).`,
+		Example: "$ jira issue upload WPB-29891 ./demo.sh\n$ jira issue attachment delete WPB-29891 91151",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cmd.Help()
 		},

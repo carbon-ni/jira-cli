@@ -43,6 +43,14 @@ func ProxyDownloadAttachment(c *jira.Client, att *jira.Attachment) (*http.Respon
 	return c.GetAttachmentContent(context.Background(), att.Content)
 }
 
+// ProxyDeleteAttachment deletes an attachment, never the containing issue.
+func ProxyDeleteAttachment(ctx context.Context, c *jira.Client, id string) error {
+	if c.InstallationType() == jira.InstallationTypeLocal {
+		return c.DeleteAttachmentV2(ctx, id)
+	}
+	return c.DeleteAttachment(ctx, id)
+}
+
 // ProxyUploadAttachment uploads a file using the configured installation API.
 func ProxyUploadAttachment(ctx context.Context, c *jira.Client, key, filename string, content io.Reader) ([]jira.Attachment, error) {
 	if c.InstallationType() == jira.InstallationTypeLocal {
